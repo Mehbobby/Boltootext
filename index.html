@@ -282,7 +282,7 @@
   const SUPABASE_URL  = 'https://swggncuqotpwbdmkimed.supabase.co'
   const SUPABASE_ANON = 'sb_publishable_y4J3wUuhm1HZc77GhGJsIg_2tokpWxb'
   const BACKEND_URL   = 'https://boltootext.onrender.com'
-  const RZ_KEY_ID     = 'rzp_test_SZqFaH7NOAMrJX'   // ya rzp_test_XXX for testing
+  const RZ_KEY_ID     = 'rzp_test_SZqFaH7NOAMrJX'
   // ───────────────────────────────────────────────────────────
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON)
@@ -306,12 +306,24 @@
   }
 
   async function init() {
+    // Handle OAuth redirect
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      const { data } = await sb.auth.getSessionFromUrl({ reuse: true })
+      if (data?.session) {
+        session = data.session
+        window.history.replaceState({}, document.title, window.location.pathname)
+        await loadUser()
+        showTool()
+        return
+      }
+    }
+
     const { data } = await sb.auth.getSession()
     session = data.session
 
     sb.auth.onAuthStateChange((_e, s) => {
       session = s
-      if (s) loadUser()
+      if (s) { loadUser(); showTool() }
     })
 
     if (session) {
