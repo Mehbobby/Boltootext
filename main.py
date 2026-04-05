@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
-import httpx, os, razorpay
+import httpx, os, hmac, hashlib
 from supabase import create_client, Client
 from datetime import datetime, timedelta, timezone
 
@@ -14,7 +14,6 @@ RAZORPAY_KEY_ID      = os.environ.get("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET  = os.environ.get("RAZORPAY_KEY_SECRET")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-rz = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 PLAN_LIMITS = {"free": 10*60, "starter": 120*60, "pro": 99999*60}
 PLAN_PRICES = {"starter": 9900, "pro": 29900}
@@ -52,6 +51,10 @@ def add_usage(uid, secs):
             supabase.table("usage").insert({"user_id": uid, "seconds_used": secs, "month_year": m}).execute()
     except Exception as e: print(f"Usage err: {e}")
 
+def verify_razorpay_signature(order_id, payment_id, signature):
+    msg = f"{order_id}|{payment_id}"
+    expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), msg.encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
 
 @app.get("/")
 def root(): return {"status": "BolToText API running"}
@@ -108,8 +111,16 @@ async def create_order(plan: str = Form(...), authorization: str = Header(None))
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Login required")
     if plan not in PLAN_PRICES: raise HTTPException(400, "Invalid plan")
-    user  = get_user(authorization.split(" ")[1])
-    order = rz.order.create({"amount": PLAN_PRICES[plan], "currency": "INR", "notes": {"user_id": str(user.id), "plan": plan}})
+    user = get_user(authorization.split(" ")[1])
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "https://api.razorpay.com/v1/orders",
+            auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET),
+            json={"amount": PLAN_PRICES[plan], "currency": "INR", "notes": {"user_id": str(user.id), "plan": plan}}
+        )
+    if resp.status_code != 200:
+        raise HTTPException(500, "Order create nahi hua")
+    order = resp.json()
     return {"order_id": order["id"], "amount": PLAN_PRICES[plan], "currency": "INR", "email": user.email}
 
 @app.post("/verify-payment")
@@ -123,9 +134,8 @@ async def verify_payment(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Login required")
     user = get_user(authorization.split(" ")[1]); uid = str(user.id)
-    try:
-        rz.utility.verify_payment_signature({"razorpay_order_id": razorpay_order_id, "razorpay_payment_id": razorpay_payment_id, "razorpay_signature": razorpay_signature})
-    except: raise HTTPException(400, "Payment verify nahi hua!")
+    if not verify_razorpay_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature):
+        raise HTTPException(400, "Payment verify nahi hua!")
     valid_until = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
     try:
         ex = supabase.table("subscriptions").select("id").eq("user_id", uid).single().execute()
@@ -135,4 +145,4 @@ async def verify_payment(
             supabase.table("subscriptions").insert({"user_id": uid, "plan": plan, "valid_until": valid_until, "razorpay_payment_id": razorpay_payment_id}).execute()
     except Exception as e: raise HTTPException(500, str(e))
     return {"success": True, "plan": plan}
-        
+    
