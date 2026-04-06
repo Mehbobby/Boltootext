@@ -115,7 +115,7 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Write EXACTLY what is spoken using only A-Z letters. This is Hinglish - Hindi words must be written in Roman letters exactly like Indians type on WhatsApp. STRICT RULES: 1) NEVER use Devanagari or any non-English script 2) Write Hindi words phonetically in English letters 3) Keep English words as-is 4) Never translate or correct - write exactly what is said 5) Use casual short spellings like Indians actually type. EXAMPLES of correct output: 'haa yaar sahi keh raha hai tu' | 'nahi bhai ye kaam nahi karega' | 'kal milte hai office ke baad' | 'bhai sun ek kaam karna tha' | 'acha theek hai kar deta hu' | 'kya hua bata na yaar' | 'abhi busy hu baad mein baat karte hai'"}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this audio with 100% accuracy. Write every word exactly as spoken - do not skip, summarize, translate or correct anything. This may be Hindi, English or Hinglish mixed. Preserve filler words like um, haan, arre, yaar, bhai. Write numbers as digits. Do not add punctuation that was not spoken."}
     if language:
         fd["language"] = language
 
@@ -228,7 +228,7 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Write EXACTLY what is spoken using only A-Z letters. This is Hinglish - Hindi words must be written in Roman letters exactly like Indians type on WhatsApp. STRICT RULES: 1) NEVER use Devanagari or any non-English script 2) Write Hindi words phonetically in English letters 3) Keep English words as-is 4) Never translate or correct - write exactly what is said 5) Use casual short spellings like Indians actually type. EXAMPLES of correct output: 'haa yaar sahi keh raha hai tu' | 'nahi bhai ye kaam nahi karega' | 'kal milte hai office ke baad' | 'bhai sun ek kaam karna tha' | 'acha theek hai kar deta hu' | 'kya hua bata na yaar' | 'abhi busy hu baad mein baat karte hai'"}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this audio with 100% accuracy. Write every word exactly as spoken - do not skip, summarize, translate or correct anything. This may be Hindi, English or Hinglish mixed. Preserve filler words like um, haan, arre, yaar, bhai. Write numbers as digits. Do not add punctuation that was not spoken."}
     if language: fd["language"] = language
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
