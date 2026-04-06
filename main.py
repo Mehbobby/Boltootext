@@ -115,7 +115,7 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this audio with 100% accuracy. Write every word exactly as spoken - do not skip, summarize, translate or correct anything. This may be Hindi, English or Hinglish mixed. Preserve filler words like um, haan, arre, yaar, bhai. Write numbers as digits. Do not add punctuation that was not spoken."}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "यह हिंदी और हिंगलिश वार्तालाप है। कृपया पूरी बातचीत देवनागरी लिपि में लिखें। अंग्रेजी शब्द भी हिंदी लिपि में लिखें।"}
     if language:
         fd["language"] = language
 
@@ -228,7 +228,7 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this audio with 100% accuracy. Write every word exactly as spoken - do not skip, summarize, translate or correct anything. This may be Hindi, English or Hinglish mixed. Preserve filler words like um, haan, arre, yaar, bhai. Write numbers as digits. Do not add punctuation that was not spoken."}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "यह हिंदी और हिंगलिश वार्तालाप है। कृपया पूरी बातचीत देवनागरी लिपि में लिखें। अंग्रेजी शब्द भी हिंदी लिपि में लिखें।"}
     if language: fd["language"] = language
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
