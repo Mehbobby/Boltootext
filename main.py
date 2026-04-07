@@ -115,22 +115,7 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": """Transcribe the audio into Hindi (Devanagari script).
-
-Rules:
-- Do NOT translate, only transcribe exactly as spoken.
-- Keep original Hinglish style.
-- English words must be written in Hindi based on pronunciation (phonetic), not translated.
-- Do NOT replace words with pure Hindi (e.g. कृपया ❌, प्लीज़ ✔️).
-- Do NOT improve grammar or formalize.
-- Keep it natural and spoken.
-- Include fillers like uh, hmm, matlab.
-
-Example:
-"please is computer ko thik kardo" → "प्लीज़ इस कंप्यूटर को ठीक कर दो"
-
-Output only final transcription in Hindi.
-"""}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "This is a Hinglish conversation. Write Hindi words in Devanagari script. Keep English words in English as spoken - do NOT translate them to Hindi. Example: if someone says 'mobile' write 'mobile', if they say 'video' write 'video', if they say 'computer' write 'computer'. Only translate the script of Hindi words, never translate English words."}
     if language:
         fd["language"] = language
 
@@ -243,22 +228,7 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": """Transcribe the audio into Hindi (Devanagari script).
-
-Rules:
-- Do NOT translate, only transcribe exactly as spoken.
-- Keep original Hinglish style.
-- English words must be written in Hindi based on pronunciation (phonetic), not translated.
-- Do NOT replace words with pure Hindi (e.g. कृपया ❌, प्लीज़ ✔️).
-- Do NOT improve grammar or formalize.
-- Keep it natural and spoken.
-- Include fillers like uh, hmm, matlab.
-
-Example:
-"please is computer ko thik kardo" → "प्लीज़ इस कंप्यूटर को ठीक कर दो"
-
-Output only final transcription in Hindi.
-"""}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "This is a Hinglish conversation. Write Hindi words in Devanagari script. Keep English words in English as spoken - do NOT translate them to Hindi. Example: if someone says 'mobile' write 'mobile', if they say 'video' write 'video', if they say 'computer' write 'computer'. Only translate the script of Hindi words, never translate English words."}
     if language: fd["language"] = language
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
