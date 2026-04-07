@@ -115,40 +115,21 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": """You are an advanced transcription AI.
+    fd = {"model": model, "response_format": "verbose_json", "prompt": """Transcribe the audio into Hindi (Devanagari script).
 
-Your task is to transcribe the given video/audio into Hindi (Devanagari script) with STRICT rules:
+Rules:
+- Do NOT translate, only transcribe exactly as spoken.
+- Keep original Hinglish style.
+- English words must be written in Hindi based on pronunciation (phonetic), not translated.
+- Do NOT replace words with pure Hindi (e.g. कृपया ❌, प्लीज़ ✔️).
+- Do NOT improve grammar or formalize.
+- Keep it natural and spoken.
+- Include fillers like uh, hmm, matlab.
 
-CORE INSTRUCTIONS:
-- Do NOT translate the meaning under any condition.
-- Transcribe EXACTLY what is spoken.
-- Preserve original wording, sentence structure, and speaking style.
+Example:
+"please is computer ko thik kardo" → "प्लीज़ इस कंप्यूटर को ठीक कर दो"
 
-HINGLISH HANDLING:
-- If the speaker uses English words, write them in Hindi based on pronunciation (phonetic transcription).
-- Do NOT convert English words into pure Hindi meanings.
-
-STYLE RULES:
-- Keep the output natural, casual, and conversational.
-- Do NOT formalize or improve grammar.
-- Preserve fillers and pauses such as: "uh", "hmm", "matlab", "like", etc.
-- Maintain the speaker’s tone and emotion.
-
-EXAMPLES:
-- "please is computer ko thik kardo" → "प्लीज़ इस कंप्यूटर को ठीक कर दो"
-- "guys aaj hum marketing strategy seekhenge" → "गाइज आज हम मार्केटिंग स्ट्रेटेजी सीखेंगे"
-
-STRICTLY AVOID:
-- ❌ कृपया (instead of प्लीज़)
-- ❌ translating or rephrasing
-- ❌ correcting grammar
-
-IMPORTANT:
-- If unsure about a word, prioritize phonetic accuracy over meaning.
-
-OUTPUT FORMAT:
-- Output ONLY the final transcription in Hindi (Devanagari script).
-- Do not add explanations, notes, or extra text.
+Output only final transcription in Hindi.
 """}
     if language:
         fd["language"] = language
@@ -262,40 +243,21 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": """You are an advanced transcription AI.
+    fd = {"model": model, "response_format": "verbose_json", "prompt": """Transcribe the audio into Hindi (Devanagari script).
 
-Your task is to transcribe the given video/audio into Hindi (Devanagari script) with STRICT rules:
+Rules:
+- Do NOT translate, only transcribe exactly as spoken.
+- Keep original Hinglish style.
+- English words must be written in Hindi based on pronunciation (phonetic), not translated.
+- Do NOT replace words with pure Hindi (e.g. कृपया ❌, प्लीज़ ✔️).
+- Do NOT improve grammar or formalize.
+- Keep it natural and spoken.
+- Include fillers like uh, hmm, matlab.
 
-CORE INSTRUCTIONS:
-- Do NOT translate the meaning under any condition.
-- Transcribe EXACTLY what is spoken.
-- Preserve original wording, sentence structure, and speaking style.
+Example:
+"please is computer ko thik kardo" → "प्लीज़ इस कंप्यूटर को ठीक कर दो"
 
-HINGLISH HANDLING:
-- If the speaker uses English words, write them in Hindi based on pronunciation (phonetic transcription).
-- Do NOT convert English words into pure Hindi meanings.
-
-STYLE RULES:
-- Keep the output natural, casual, and conversational.
-- Do NOT formalize or improve grammar.
-- Preserve fillers and pauses such as: "uh", "hmm", "matlab", "like", etc.
-- Maintain the speaker’s tone and emotion.
-
-EXAMPLES:
-- "please is computer ko thik kardo" → "प्लीज़ इस कंप्यूटर को ठीक कर दो"
-- "guys aaj hum marketing strategy seekhenge" → "गाइज आज हम मार्केटिंग स्ट्रेटेजी सीखेंगे"
-
-STRICTLY AVOID:
-- ❌ कृपया (instead of प्लीज़)
-- ❌ translating or rephrasing
-- ❌ correcting grammar
-
-IMPORTANT:
-- If unsure about a word, prioritize phonetic accuracy over meaning.
-
-OUTPUT FORMAT:
-- Output ONLY the final transcription in Hindi (Devanagari script).
-- Do not add explanations, notes, or extra text.
+Output only final transcription in Hindi.
 """}
     if language: fd["language"] = language
     try:
