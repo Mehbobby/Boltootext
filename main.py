@@ -115,7 +115,7 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this Hinglish audio exactly as spoken into Devanagari script. Rules: 1) Hindi words → write in Devanagari as spoken. 2) English words → write in Devanagari phonetically as spoken, do NOT translate their meaning. Examples: 'please' → 'प्लीज़', 'computer' → 'कंप्यूटर', 'mobile' → 'मोबाइल', 'video' → 'वीडियो', 'okay' → 'ओके', 'fix' → 'फिक्स'. If speaker says 'please is computer ko thik kardo' write 'प्लीज़ इस कंप्यूटर को ठीक कर दो' — never write 'कृपया' for 'please'. Always preserve the exact spoken words, only convert script to Devanagari."}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this English, hindi, Hinglish audio exactly as spoken into hindi script. Rules: 1) Hindi words → write in hindi as spoken. 2) English words → write in Devanagari phonetically as spoken, do NOT translate their meaning. Examples: 'please' → 'प्लीज़', 'computer' → 'कंप्यूटर', 'mobile' → 'मोबाइल', 'video' → 'वीडियो', 'okay' → 'ओके', 'fix' → 'फिक्स'. If speaker says 'please is computer ko thik kardo' write 'प्लीज़ इस कंप्यूटर को ठीक कर दो' — never write 'कृपया' for 'please'. Always preserve the exact spoken words, only convert script to Devanagari."}
     if language:
         fd["language"] = language
 
@@ -228,7 +228,7 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this Hinglish audio exactly as spoken into Devanagari script. Rules: 1) Hindi words → write in Devanagari as spoken. 2) English words → write in Devanagari phonetically as spoken, do NOT translate their meaning. Examples: 'please' → 'प्लीज़', 'computer' → 'कंप्यूटर', 'mobile' → 'मोबाइल', 'video' → 'वीडियो', 'okay' → 'ओके', 'fix' → 'फिक्स'. If speaker says 'please is computer ko thik kardo' write 'प्लीज़ इस कंप्यूटर को ठीक कर दो' — never write 'कृपया' for 'please'. Always preserve the exact spoken words, only convert script to Devanagari."}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "Transcribe this English, hindi, Hinglish audio exactly as spoken into hindi script. Rules: 1) Hindi words → write in hindi as spoken. 2) English words → write in Devanagari phonetically as spoken, do NOT translate their meaning. Examples: 'please' → 'प्लीज़', 'computer' → 'कंप्यूटर', 'mobile' → 'मोबाइल', 'video' → 'वीडियो', 'okay' → 'ओके', 'fix' → 'फिक्स'. If speaker says 'please is computer ko thik kardo' write 'प्लीज़ इस कंप्यूटर को ठीक कर दो' — never write 'कृपया' for 'please'. Always preserve the exact spoken words, only convert script to Devanagari."}
     if language: fd["language"] = language
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
