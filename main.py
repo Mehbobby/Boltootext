@@ -115,9 +115,8 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "video me jo bhi bole uska word to word transcribe krdo hindi me without transclation"}
-    if language:
-        fd["language"] = language
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "हिंदी"}
+    fd["language"] = language if language else "hi"
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -228,8 +227,8 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "video me jo bhi bole uska word to word transcribe krdo hindi me without transclation"}
-    if language: fd["language"] = language
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "हिंदी"}
+    fd["language"] = language if language else "hi"
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
