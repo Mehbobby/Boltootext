@@ -115,7 +115,7 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Video hindi, english ya fir hinglish jsime english or hindi dono use hota hai is type k video ko transribe karoge to hindi me hi transcribe krna, english words ko pure hindi me translate krne ki zaruart nahi hai"}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "Video hindi, english ya fir hinglish jsime english or hindi dono use hota hai is type k video ko transribe karoge to hindi me hi transcribe krna, english words ko pure hindi me translate krne ki zaruart nahi hai, jaha kahi english me bol de video iska mtlb ye ni haimki waha se zara transcribe english me chalu kr do, Always make sure final transcribe hindi me hi rahe ga, 1 bhi english ka character ni aana chahiye final transription me, english me kuch bol rha hai to usko hindi me hi likho"}
     if language:
         fd["language"] = language
 
@@ -228,7 +228,7 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "Video hindi, english ya fir hinglish jsime english or hindi dono use hota hai is type k video ko transribe karoge to hindi me hi transcribe krna, english words ko pure hindi me translate krne ki zaruart nahi hai"}
+    fd = {"model": model, "response_format": "verbose_json", "prompt": "Video hindi, english ya fir hinglish jsime english or hindi dono use hota hai is type k video ko transribe karoge to hindi me hi transcribe krna, english words ko pure hindi me translate krne ki zaruart nahi hai, jaha kahi english me bol de video iska mtlb ye ni haimki waha se zara transcribe english me chalu kr do, Always make sure final transcribe hindi me hi rahe ga, 1 bhi english ka character ni aana chahiye final transription me, english me kuch bol rha hai to usko hindi me hi likho"}
     if language: fd["language"] = language
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
