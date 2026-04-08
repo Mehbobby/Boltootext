@@ -115,22 +115,8 @@ async def transcribe(
     if len(fb) > 25 * 1024 * 1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
 
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "हिंदी"}
-    fd["language"] = language if language else "hi"
-
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(
-                "https://api.groq.com/openai/v1/audio/transcriptions",
-                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-                files={"file": (file.filename, fb, file.content_type or "audio/mpeg")},
-                data=fd,
-            )
-        if resp.status_code != 200:
-            err = resp.json().get("error", {})
-            raise HTTPException(resp.status_code, err.get("message", "Groq error"))
-
-        data = resp.json()
+        data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
         dur  = int(data.get("duration", 0)) + 1
         add_usage(uid, dur)
         new_used = used + dur
@@ -217,6 +203,28 @@ async def verify_payment(
     return {"success": True, "plan": plan}
 
 
+async def call_groq_whisper(fb: bytes, filename: str, content_type: str, model: str, language: str) -> dict:
+    """Call Groq Whisper API and return result"""
+    fd = {
+        "model": model,
+        "response_format": "verbose_json",
+        "prompt": "हिंदी",
+        "language": language if language else "hi",
+        "temperature": "0"
+    }
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        resp = await client.post(
+            "https://api.groq.com/openai/v1/audio/transcriptions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            files={"file": (filename, fb, content_type or "audio/wav")},
+            data=fd,
+        )
+    if resp.status_code != 200:
+        err = resp.json().get("error", {})
+        raise HTTPException(resp.status_code, err.get("message", "Groq error"))
+    return resp.json()
+
+
 @app.post("/transcribe-guest")
 async def transcribe_guest(
     file: UploadFile = File(...),
@@ -227,19 +235,9 @@ async def transcribe_guest(
     fb = await file.read()
     if len(fb) > 25*1024*1024:
         raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json", "prompt": "हिंदी"}
-    fd["language"] = language if language else "hi"
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(
-                "https://api.groq.com/openai/v1/audio/transcriptions",
-                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-                files={"file": (file.filename, fb, file.content_type or "audio/mpeg")},
-                data=fd,
-            )
-        if resp.status_code != 200:
-            err = resp.json().get("error", {})
-            raise HTTPException(resp.status_code, err.get("message", "Groq error"))
-        return resp.json()
+        data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
+        return data
     except httpx.TimeoutException:
         raise HTTPException(504, "Timeout! Try again.")
+        
