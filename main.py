@@ -240,4 +240,3 @@ async def transcribe_guest(
         return data
     except httpx.TimeoutException:
         raise HTTPException(504, "Timeout! Try again.")
-        
