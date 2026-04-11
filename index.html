@@ -337,9 +337,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <!-- LOGIN MODAL -->
 <div class="modal-bg" id="loginM">
   <div class="modal">
-    <span class="m-icon">🚀</span>
-    <h2>Start for free</h2>
-    <p>Sign in with Google and get <strong style="color:var(--accent)">10 minutes/month free</strong>. No credit card ever.</p>
+    <span class="m-icon" id="loginIcon">🚀</span>
+    <h2 id="loginTitle">Start for free</h2>
+    <p id="loginDesc">Sign in with Google and get <strong style="color:var(--accent)">10 minutes/month free</strong>. No credit card ever.</p>
     <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.18);border-radius:8px;padding:11px 14px;margin-bottom:18px;font-size:12px;color:#86efac;line-height:1.8">
       ✓ 10 min/month free &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Cancel anytime
     </div>
@@ -486,7 +486,18 @@ document.addEventListener('click', e => { if (!e.target.closest('.av-wrap')) clo
 // ── AUTH ──────────────────────────────────────────────────
 window.doLogin = () => sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:location.origin+location.pathname }})
 window.doLogout = async () => { await sb.auth.signOut(); sess=null; uData=null; renderUI() }
-window.openModal  = id => document.getElementById(id).classList.add('open')
+window.openModal = (id, reason) => {
+  if (id === 'loginM' && reason === 'limit') {
+    document.getElementById('loginIcon').textContent = '⏱'
+    document.getElementById('loginTitle').textContent = 'Your 4 free minutes are up!'
+    document.getElementById('loginDesc').innerHTML = 'Sign up free with Google to get <strong style="color:var(--accent)">10 minutes/month</strong> — no credit card needed.'
+  } else {
+    document.getElementById('loginIcon').textContent = '🚀'
+    document.getElementById('loginTitle').textContent = 'Start for free'
+    document.getElementById('loginDesc').innerHTML = 'Sign in with Google and get <strong style="color:var(--accent)">10 minutes/month free</strong>. No credit card ever.'
+  }
+  document.getElementById(id).classList.add('open')
+}
 window.closeModal = id => document.getElementById(id).classList.remove('open')
 window.openPricing = (msg) => { if(msg) document.getElementById('priceMsg').textContent=msg; openModal('priceM') }
 document.querySelectorAll('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open') }))
@@ -530,7 +541,7 @@ window.rmFile = () => {
 // ── TRANSCRIBE ────────────────────────────────────────────
 window.doGo = async () => {
   if (!selFile) return
-  if (!sess && gSec() >= GUEST_MAX) { openModal('loginM'); return }
+  if (!sess && gSec() >= GUEST_MAX) { openModal('loginM', 'limit'); return }
   if (sess && uData) {
     const lim = PLAN_LIM[uData.plan]||PLAN_LIM.free
     if (uData.usage_seconds >= lim) { openPricing('You have used all your free minutes. Upgrade to continue!'); return }
@@ -571,7 +582,7 @@ window.doGo = async () => {
     segments = data.segments || []
 
     if (sess && data.usage) { uData.usage_seconds=data.usage.used; renderUI() }
-    if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM'),1200) }
+    if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM','limit'),1200) }
 
     pf.style.width='100%'; pm.textContent='Done! ✓'
 
