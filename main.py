@@ -243,3 +243,64 @@ async def transcribe_guest(
         return data
     except httpx.TimeoutException:
         raise HTTPException(504, "Timeout! Try again.")
+
+
+@app.post("/convert")
+async def convert_text(
+    text: str = Form(...),
+    target: str = Form(...),  # "hinglish" or "english"
+):
+    """Convert Hindi transcript to Hinglish or English using LLaMA"""
+
+    if target == "hinglish":
+        prompt = f"""Convert this Hindi transcript to Hinglish (Roman script). 
+Rules:
+- Write exactly as an Indian would speak casually in Roman letters
+- Mix Hindi and English naturally like real conversation
+- Do NOT translate meaning, just convert the script/style
+- Keep English words as English
+- Example: "मैं कल घर जाऊंगा" → "Main kal ghar jaunga"
+- Example: "यह बहुत अच्छा है" → "Yeh bahut accha hai"
+
+Hindi transcript:
+{text}
+
+Hinglish output (only output the converted text, nothing else):"""
+
+    elif target == "english":
+        prompt = f"""Translate this Hindi/Hinglish transcript to natural English.
+- Keep the meaning accurate
+- Use natural conversational English
+- Do not add extra words or change meaning
+
+Transcript:
+{text}
+
+English translation (only output the translation, nothing else):"""
+    else:
+        raise HTTPException(400, "Invalid target. Use 'hinglish' or 'english'")
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3,
+                    "max_tokens": 4000,
+                }
+            )
+        if resp.status_code != 200:
+            raise HTTPException(500, "Conversion failed")
+        
+        data = resp.json()
+        converted = data["choices"][0]["message"]["content"].strip()
+        return {"text": converted, "target": target}
+
+    except httpx.TimeoutException:
+        raise HTTPException(504, "Conversion timed out. Try again.")
