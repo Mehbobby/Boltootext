@@ -95,7 +95,7 @@ async def me(authorization: str = Header(None)):
 @app.post("/transcribe")
 async def transcribe(
     file: UploadFile = File(...),
-    model: str = Form("whisper-large-v3"),
+    model: str = Form("whisper-large-v3-turbo"),
     language: str = Form(""),
     authorization: str = Header(None),
 ):
@@ -208,15 +208,18 @@ async def call_groq_whisper(fb: bytes, filename: str, content_type: str, model: 
     fd = {
         "model": model,
         "response_format": "verbose_json",
-        "prompt": "हिंदी",
-        "language": language if language else "hi",
-        "temperature": "0"
+        "temperature": "0",
     }
-    async with httpx.AsyncClient(timeout=180.0) as client:
+    # Only set language if user explicitly chose one
+    # For Hinglish (auto), let Whisper detect — forced "hi" causes translation issues
+    if language:
+        fd["language"] = language
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
         resp = await client.post(
             "https://api.groq.com/openai/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-            files={"file": (filename, fb, content_type or "audio/wav")},
+            files={"file": (filename, fb, content_type or "audio/mpeg")},
             data=fd,
         )
     if resp.status_code != 200:
@@ -228,7 +231,7 @@ async def call_groq_whisper(fb: bytes, filename: str, content_type: str, model: 
 @app.post("/transcribe-guest")
 async def transcribe_guest(
     file: UploadFile = File(...),
-    model: str = Form("whisper-large-v3"),
+    model: str = Form("whisper-large-v3-turbo"),
     language: str = Form(""),
 ):
     """No auth needed — guest gets 4 min, tracked client-side"""
