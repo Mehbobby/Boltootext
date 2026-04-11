@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BolToText — Hinglish Transcriber</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--card:#1a1a1e;--card2:#111115;--border:rgba(255,255,255,0.08);
+  --accent:#f97316;--accent-dim:rgba(249,115,22,0.1);--accent-border:rgba(249,115,22,0.25);
+  --text:#f1f0ee;--text2:#9ca3af;--text3:#6b7280;
+  --success:#22c55e;--error:#ef4444;--r:12px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#2a2a2e;border-radius:99px}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;background:rgba(13,13,15,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.logo{font-weight:800;font-size:18px;letter-spacing:-0.5px}
+.logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:8px}
+
+/* AVATAR */
+.av-wrap{position:relative}
+.av-btn{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#f59e0b);border:none;cursor:pointer;font-weight:800;font-size:13px;color:#fff;display:flex;align-items:center;justify-content:center;transition:box-shadow 0.2s}
+.av-btn:hover{box-shadow:0 0 0 3px var(--accent-dim)}
+.av-dd{display:none;position:absolute;top:calc(100% + 8px);right:0;width:230px;background:#1e1e24;border:1px solid var(--border);border-radius:var(--r);padding:6px;box-shadow:0 16px 40px rgba(0,0,0,0.5);z-index:100}
+.av-dd.open{display:block;animation:dropIn 0.15s ease}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.av-head{padding:12px 12px 10px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.av-name{font-weight:700;font-size:13px}
+.av-email{font-size:11px;color:var(--text3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.credits-box{margin:8px 8px 4px;padding:10px 12px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:8px}
+.credits-lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
+.credits-val{font-weight:800;font-size:16px;color:var(--accent)}
+.credits-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.dd-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text);transition:background 0.15s;text-align:left;font-family:'Plus Jakarta Sans',sans-serif}
+.dd-btn:hover{background:rgba(255,255,255,0.05)}
+.dd-btn.orange{color:var(--accent)}
+.dd-btn.red{color:var(--error)}
+.dd-sep{height:1px;background:var(--border);margin:4px 0}
+
+/* BTNS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;transition:all 0.15s;white-space:nowrap}
+.btn-pr{background:var(--accent);color:#fff}
+.btn-pr:hover{background:#ea6c0a}
+.btn-pr:disabled{background:#2a2a2e;color:var(--text3);cursor:not-allowed}
+.btn-out{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-out:hover{border-color:rgba(255,255,255,0.2);color:var(--text)}
+.btn-sm{padding:7px 13px;font-size:12px}
+
+/* MAIN */
+.main{max-width:660px;margin:0 auto;padding:32px 16px 80px}
+
+/* BANNER */
+.banner{background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;display:none;flex-wrap:wrap;gap:12px;font-size:13px;line-height:1.6}
+.banner.show{display:flex;align-items:center;justify-content:space-between}
+.banner strong{color:var(--accent)}
+
+/* USAGE */
+.usage-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:20px;display:none}
+.usage-wrap.show{display:block}
+.usage-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.usage-lbl{font-size:12px;color:var(--text2);font-weight:500}
+.usage-val{font-size:13px;font-weight:700}
+.u-bar-bg{height:5px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden}
+.u-bar{height:100%;border-radius:99px;transition:width 0.5s;background:linear-gradient(90deg,var(--accent),#f59e0b)}
+.u-bar.warn{background:linear-gradient(90deg,#f59e0b,var(--error))}
+.u-bar.full{background:var(--error)}
+.usage-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.usage-plan-txt{font-size:11px;color:var(--text3)}
+.chip{font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;text-transform:uppercase}
+.chip-guest{background:rgba(251,191,36,0.12);color:#f59e0b}
+.chip-free{background:rgba(34,197,94,0.12);color:var(--success)}
+.chip-starter,.chip-pro{background:var(--accent-dim);color:var(--accent)}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card-lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:14px}
+
+/* FORMAT SELECTOR (before transcribe) */
+.format-selector{margin-bottom:16px}
+.format-selector .card-lbl{margin-bottom:10px}
+.format-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.format-opt{
+  border:1.5px solid var(--border);border-radius:10px;
+  padding:12px 10px;text-align:center;cursor:pointer;
+  transition:all 0.15s;background:transparent;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.format-opt:hover{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.03)}
+.format-opt.sel{border-color:var(--accent);background:var(--accent-dim)}
+.format-opt .f-emoji{font-size:20px;margin-bottom:6px;display:block}
+.format-opt .f-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.format-opt .f-desc{font-size:10px;color:var(--text3);line-height:1.4}
+
+/* QUALITY TOGGLE */
+.quality-row{display:flex;gap:8px;margin-top:12px}
+.qual-btn{flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text2);transition:all 0.15s;text-align:center}
+.qual-btn:hover{border-color:rgba(255,255,255,0.2);color:var(--text)}
+.qual-btn.sel{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+
+/* UPLOAD */
+.drop-zone{border:2px dashed rgba(255,255,255,0.1);border-radius:var(--r);padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon{font-size:36px;margin-bottom:12px;display:block}
+.dz-title{font-size:17px;font-weight:700;margin-bottom:5px}
+.dz-sub{font-size:12px;color:var(--text3);line-height:1.8}
+.dz-sub b{color:#f59e0b}
+
+.file-row{display:none;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.18);border-radius:8px;padding:12px 14px;align-items:center;gap:10px;margin-top:12px}
+.file-row.show{display:flex}
+.f-icon{width:36px;height:36px;background:rgba(34,197,94,0.12);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.f-meta{flex:1;min-width:0}
+.f-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f-size{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* BIG BTN */
+#goBtn{width:100%;padding:15px;margin-top:14px;background:linear-gradient(135deg,var(--accent),#f59e0b);color:#fff;font-size:15px;font-weight:700;border:none;border-radius:var(--r);cursor:pointer;transition:all 0.2s;letter-spacing:0.2px;font-family:'Plus Jakarta Sans',sans-serif}
+#goBtn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(249,115,22,0.3)}
+#goBtn:disabled{background:#222226;color:var(--text3);cursor:not-allowed;transform:none;box-shadow:none}
+
+/* PROGRESS */
+.prog-wrap{display:none;margin-top:14px}
+.prog-wrap.show{display:block}
+.prog-bg{height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.prog-fill{height:100%;border-radius:99px;width:0%;transition:width 0.4s;background:linear-gradient(90deg,var(--accent),#f59e0b)}
+.prog-msg{font-size:12px;color:var(--text3)}
+
+/* ERROR */
+.err-box{display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px 14px;font-size:13px;color:#fca5a5;margin-top:12px;line-height:1.6}
+.err-box.show{display:block}
+
+/* OUTPUT */
+.out-card{display:none}
+.out-card.show{display:block}
+
+/* EXPORT TOOLBAR */
+.export-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;margin-bottom:14px;
+}
+.export-bar .card-lbl{margin-bottom:0}
+.export-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* Export buttons - disabled state */
+.exp-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1px solid var(--border);
+  background:transparent;color:var(--text3);
+  transition:all 0.15s;font-family:'Plus Jakarta Sans',sans-serif;
+  opacity:0.4;pointer-events:none;
+}
+.exp-btn.active{opacity:1;pointer-events:auto;color:var(--text2)}
+.exp-btn.active:hover{border-color:rgba(255,255,255,0.2);color:var(--text);background:rgba(255,255,255,0.04)}
+.exp-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);opacity:0.4}
+.exp-btn.primary.active{opacity:1}
+.exp-btn.primary.active:hover{background:#ea6c0a}
+
+/* Timestamp toggle */
+.ts-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);opacity:0.4;pointer-events:none}
+.ts-wrap.active{opacity:1;pointer-events:auto;cursor:pointer;color:var(--text2)}
+.ts-wrap.active:hover{color:var(--text)}
+.toggle{width:32px;height:18px;border-radius:99px;background:var(--border);position:relative;transition:background 0.2s;flex-shrink:0;cursor:pointer}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform 0.2s}
+.toggle.on{background:var(--accent)}
+.toggle.on::after{transform:translateX(14px)}
+
+/* TRANSCRIPT BOX */
+.out-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:18px;font-size:14px;line-height:1.9;min-height:160px;white-space:pre-wrap;word-break:break-word}
+.out-meta{font-size:11px;color:var(--text3);text-align:right;margin-top:6px}
+
+/* CONVERTING OVERLAY */
+.converting{display:none;align-items:center;gap:8px;font-size:12px;color:var(--text2);margin-bottom:8px}
+.converting.show{display:flex}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:#18181c;border:1px solid var(--border);border-radius:18px;width:100%;max-width:440px;padding:26px;animation:popIn 0.2s ease}
+@keyframes popIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
+.m-icon{font-size:34px;margin-bottom:12px;display:block}
+.modal h2{font-size:21px;font-weight:800;letter-spacing:-0.5px;margin-bottom:7px}
+.modal p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px}
+.m-btns{display:flex;gap:10px}
+
+/* PLANS */
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.plan{border:1.5px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all 0.15s;position:relative}
+.plan:hover,.plan.sel{border-color:var(--accent);background:var(--accent-dim)}
+.plan .hot{position:absolute;top:-9px;right:10px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px}
+.plan-n{font-weight:700;font-size:14px;margin-bottom:3px}
+.plan-p{font-size:22px;font-weight:800;color:var(--accent);margin-bottom:6px}
+.plan-p sub{font-size:12px;font-weight:500;color:var(--text2)}
+.plan-fs{list-style:none;font-size:11px;color:var(--text2);line-height:1.9}
+.plan-fs li::before{content:'✓ ';color:var(--success);font-weight:700}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);background:#1e1e24;border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:600;padding:9px 20px;border-radius:99px;opacity:0;transition:all 0.22s;pointer-events:none;z-index:999;display:flex;align-items:center;gap:7px;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.t-dot{width:6px;height:6px;background:var(--success);border-radius:50%}
+
+/* RESPONSIVE */
+@media(max-width:580px){
+  .main{padding:20px 14px 60px}
+  .plans{grid-template-columns:1fr}
+  .m-btns{flex-direction:column}
+  .format-options{grid-template-columns:repeat(3,1fr)}
+  .export-actions{gap:4px}
+  .exp-btn{padding:6px 10px;font-size:11px}
+  .banner{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo">Bol<span>To</span>Text</div>
+  <div class="nav-right" id="navRight">
+    <button class="btn btn-out btn-sm" onclick="openModal('loginM')">Sign in</button>
+    <button class="btn btn-pr btn-sm" onclick="openModal('loginM')">Try free</button>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- BANNER -->
+  <div class="banner" id="guestBanner">
+    <div>👋 Try <strong>4 minutes free</strong> — no signup. Sign up for <strong>10 min/month</strong> free!</div>
+    <button class="btn btn-pr btn-sm" onclick="openModal('loginM')" style="flex-shrink:0">Sign up free →</button>
+  </div>
+
+  <!-- USAGE -->
+  <div class="usage-wrap" id="usageWrap">
+    <div class="usage-row">
+      <span class="usage-lbl">Minutes used this month</span>
+      <span class="usage-val" id="uVal">— / —</span>
+    </div>
+    <div class="u-bar-bg"><div class="u-bar" id="uBar" style="width:0%"></div></div>
+    <div class="usage-foot">
+      <span class="usage-plan-txt" id="uPlan">—</span>
+      <span class="chip" id="uChip">—</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: FORMAT -->
+  <div class="card format-selector">
+    <div class="card-lbl">Step 1 — Choose Output Format</div>
+    <div class="format-options">
+      <button class="format-opt" id="fmt-hindi" onclick="chooseFmt('hindi')">
+        <span class="f-emoji">🇮🇳</span>
+        <div class="f-name">Hindi</div>
+        <div class="f-desc">देवनागरी लिपि में</div>
+      </button>
+      <button class="format-opt sel" id="fmt-hinglish" onclick="chooseFmt('hinglish')">
+        <span class="f-emoji">🔤</span>
+        <div class="f-name">Hinglish</div>
+        <div class="f-desc">Roman script mein</div>
+      </button>
+      <button class="format-opt" id="fmt-english" onclick="chooseFmt('english')">
+        <span class="f-emoji">🇬🇧</span>
+        <div class="f-name">English</div>
+        <div class="f-desc">Full translation</div>
+      </button>
+    </div>
+    <div class="quality-row">
+      <button class="qual-btn sel" id="q-fast" onclick="chooseQuality('fast')">⚡ Fast</button>
+      <button class="qual-btn" id="q-accurate" onclick="chooseQuality('accurate')">🎯 Accurate</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: UPLOAD -->
+  <div class="card">
+    <div class="card-lbl">Step 2 — Upload File</div>
+    <div class="drop-zone" id="dz">
+      <input type="file" id="fi" accept="video/*,audio/*,.mp3,.mp4,.wav,.m4a,.webm,.ogg,.flac" onchange="pickFile(this.files[0])"/>
+      <span class="dz-icon">🎬</span>
+      <div class="dz-title">Click to upload or drag & drop</div>
+      <div class="dz-sub">MP4 · MOV · MP3 · WAV · M4A · WEBM<br><b>Max 25MB</b></div>
+    </div>
+    <div class="file-row" id="fRow">
+      <div class="f-icon">📁</div>
+      <div class="f-meta">
+        <div class="f-name" id="fName">—</div>
+        <div class="f-size" id="fSize">—</div>
+      </div>
+      <button class="btn btn-out btn-sm" onclick="rmFile()">✕ Remove</button>
+    </div>
+    <button id="goBtn" onclick="doGo()" disabled>▶ &nbsp;Transcribe Now</button>
+    <div class="prog-wrap" id="pw">
+      <div class="prog-bg"><div class="prog-fill" id="pf"></div></div>
+      <div class="prog-msg" id="pm">Preparing...</div>
+    </div>
+    <div class="err-box" id="eb"></div>
+  </div>
+
+  <!-- STEP 3: OUTPUT -->
+  <div class="card out-card" id="outCard">
+    <div class="export-bar">
+      <div class="card-lbl">Transcript</div>
+      <div class="export-actions">
+        <!-- Copy -->
+        <button class="exp-btn" id="exp-copy" onclick="cpText()">📋 Copy</button>
+        <!-- Export buttons -->
+        <button class="exp-btn" id="exp-txt"  onclick="dlText()">TXT</button>
+        <button class="exp-btn" id="exp-srt"  onclick="dlSRT()">SRT</button>
+        <button class="exp-btn" id="exp-pdf"  onclick="dlPDF()">PDF</button>
+        <button class="exp-btn" id="exp-docx" onclick="dlDOCX()">DOCX</button>
+        <!-- Timestamps -->
+        <div class="ts-wrap" id="tsWrap" onclick="toggleTs()">
+          <div class="toggle" id="tsToggle"></div>
+          <span>Timestamps</span>
+        </div>
+      </div>
+    </div>
+    <div class="converting" id="converting">
+      <div class="spinner"></div>
+      <span id="convertMsg">Converting...</span>
+    </div>
+    <div class="out-box" id="ob"></div>
+    <div class="out-meta" id="om"></div>
+  </div>
+
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-bg" id="loginM">
+  <div class="modal">
+    <span class="m-icon">🚀</span>
+    <h2>Start for free</h2>
+    <p>Sign in with Google and get <strong style="color:var(--accent)">10 minutes/month free</strong>. No credit card ever.</p>
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.18);border-radius:8px;padding:11px 14px;margin-bottom:18px;font-size:12px;color:#86efac;line-height:1.8">
+      ✓ 10 min/month free &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Cancel anytime
+    </div>
+    <div class="m-btns">
+      <button class="btn btn-out" onclick="closeModal('loginM')" style="flex:1">Maybe later</button>
+      <button class="btn btn-pr" onclick="doLogin()" style="flex:2;font-size:14px;padding:13px">
+        <svg width="15" height="15" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING MODAL -->
+<div class="modal-bg" id="priceM">
+  <div class="modal" style="max-width:480px">
+    <span class="m-icon">⚡</span>
+    <h2>Upgrade plan</h2>
+    <p id="priceMsg">You've used your free minutes. Upgrade to continue!</p>
+    <div class="plans">
+      <div class="plan sel" id="c-starter" onclick="selPlan('starter')">
+        <div class="hot">POPULAR</div>
+        <div class="plan-n">Starter</div>
+        <div class="plan-p">₹99<sub>/mo</sub></div>
+        <ul class="plan-fs"><li>120 min/month</li><li>All formats</li><li>All exports</li></ul>
+      </div>
+      <div class="plan" id="c-pro" onclick="selPlan('pro')">
+        <div class="plan-n">Pro 🔥</div>
+        <div class="plan-p">₹299<sub>/mo</sub></div>
+        <ul class="plan-fs"><li>500 min/month</li><li>Priority speed</li><li>All features</li></ul>
+      </div>
+    </div>
+    <div class="m-btns">
+      <button class="btn btn-out" onclick="closeModal('priceM')" style="flex:1">Later</button>
+      <button class="btn btn-pr" onclick="doPay()" style="flex:2;font-size:14px;padding:13px" id="payBtn">Pay ₹99/month →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="t-dot"></span><span id="tMsg">Done!</span></div>
+
+<script>
+const SUPABASE_URL  = 'https://swggncuqotpwbdmkimed.supabase.co'
+const SUPABASE_ANON = 'sb_publishable_y4J3wUuhm1HZc77GhGJsIg_2tokpWxb'
+const BACKEND       = 'https://boltootext.onrender.com'
+const RZ_KEY        = 'rzp_test_SZqFaH7NOAMrJX'
+const GUEST_MAX     = 4 * 60
+const PLAN_LIM      = { free:600, starter:7200, pro:30000 }
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+let sess=null, uData=null, selFile=null, rawTxt='', displayTxt='', segments=[], sPlan='starter'
+let chosenFmt='hinglish', chosenQuality='fast', showTs=false
+
+const gSec = () => parseInt(localStorage.getItem('btt_g')||'0')
+const addG  = s  => localStorage.setItem('btt_g', gSec()+s)
+
+// ── INIT ──────────────────────────────────────────────────
+async function init() {
+  const hash = window.location.hash
+  if (hash.includes('access_token')) {
+    const p = new URLSearchParams(hash.slice(1))
+    try { await sb.auth.setSession({ access_token:p.get('access_token'), refresh_token:p.get('refresh_token') }) } catch(e){}
+    window.history.replaceState({}, '', window.location.pathname)
+  }
+  const { data } = await sb.auth.getSession()
+  sess = data?.session || null
+  if (sess) await Promise.race([loadUser(), new Promise(r=>setTimeout(r,5000))])
+  renderUI()
+  sb.auth.onAuthStateChange(async (_e,s) => {
+    sess=s; uData=null
+    if (s) await loadUser()
+    renderUI()
+  })
+}
+
+async function loadUser() {
+  try {
+    const r = await fetch(BACKEND+'/me',{headers:{Authorization:`Bearer ${sess.access_token}`}})
+    if (r.ok) uData = await r.json()
+    else { await sb.auth.signOut(); sess=null }
+  } catch(e){}
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function renderUI() {
+  const nr = document.getElementById('navRight')
+  const gb = document.getElementById('guestBanner')
+  const uw = document.getElementById('usageWrap')
+
+  if (sess && uData) {
+    gb.classList.remove('show')
+    uw.classList.add('show')
+    const plan=uData.plan||'free', used=uData.usage_seconds||0
+    const lim=PLAN_LIM[plan]||PLAN_LIM.free
+    const uMin=Math.round(used/60), lMin=Math.round(lim/60)
+    const pct=Math.min(100,(used/lim)*100), rem=Math.max(0,lMin-uMin)
+    document.getElementById('uVal').textContent=`${uMin} min / ${lMin} min`
+    document.getElementById('uPlan').textContent=plan.charAt(0).toUpperCase()+plan.slice(1)+' plan'
+    document.getElementById('uBar').style.width=pct+'%'
+    document.getElementById('uBar').className='u-bar'+(pct>=100?' full':pct>=80?' warn':'')
+    document.getElementById('uChip').textContent=plan.toUpperCase()
+    document.getElementById('uChip').className=`chip chip-${plan}`
+    const init=(uData.email||'U')[0].toUpperCase()
+    nr.innerHTML=`
+      <div class="av-wrap">
+        <button class="av-btn" onclick="toggleDD()">${init}</button>
+        <div class="av-dd" id="avDD">
+          <div class="av-head">
+            <div class="av-name">${(uData.email||'').split('@')[0]}</div>
+            <div class="av-email">${uData.email||''}</div>
+          </div>
+          <div class="credits-box">
+            <div class="credits-lbl">Credits remaining</div>
+            <div class="credits-val">${rem} minutes</div>
+            <div class="credits-sub">${plan.charAt(0).toUpperCase()+plan.slice(1)} · resets monthly</div>
+          </div>
+          ${(plan==='free'||plan==='starter')?`<button class="dd-btn orange" onclick="closeDD();openPricing()">⚡ Upgrade plan</button>`:''}
+          <div class="dd-sep"></div>
+          <button class="dd-btn red" onclick="doLogout()">Sign out</button>
+        </div>
+      </div>`
+  } else {
+    uw.classList.add('show')
+    const gu=gSec(), pct=Math.min(100,(gu/GUEST_MAX)*100)
+    if (gu>0) gb.classList.add('show')
+    else gb.classList.add('show')
+    document.getElementById('uVal').textContent=`${Math.round(gu/60)} min / 4 min (guest)`
+    document.getElementById('uPlan').textContent='Guest — sign up for more free minutes'
+    document.getElementById('uBar').style.width=pct+'%'
+    document.getElementById('uBar').className='u-bar'+(pct>=100?' full':pct>=80?' warn':'')
+    document.getElementById('uChip').textContent='GUEST'
+    document.getElementById('uChip').className='chip chip-guest'
+    nr.innerHTML=`
+      <button class="btn btn-out btn-sm" onclick="openModal('loginM')">Sign in</button>
+      <button class="btn btn-pr btn-sm" onclick="openModal('loginM')">Try free</button>`
+  }
+}
+
+// ── DROPDOWN ──────────────────────────────────────────────
+window.toggleDD = () => document.getElementById('avDD')?.classList.toggle('open')
+window.closeDD  = () => document.getElementById('avDD')?.classList.remove('open')
+document.addEventListener('click', e => { if (!e.target.closest('.av-wrap')) closeDD() })
+
+// ── AUTH ──────────────────────────────────────────────────
+window.doLogin = () => sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:location.origin+location.pathname }})
+window.doLogout = async () => { await sb.auth.signOut(); sess=null; uData=null; renderUI() }
+window.openModal  = id => document.getElementById(id).classList.add('open')
+window.closeModal = id => document.getElementById(id).classList.remove('open')
+window.openPricing = (msg) => { if(msg) document.getElementById('priceMsg').textContent=msg; openModal('priceM') }
+document.querySelectorAll('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open') }))
+
+// ── FORMAT & QUALITY ──────────────────────────────────────
+window.chooseFmt = fmt => {
+  chosenFmt = fmt
+  document.querySelectorAll('.format-opt').forEach(b => b.classList.remove('sel'))
+  document.getElementById('fmt-'+fmt).classList.add('sel')
+}
+
+window.chooseQuality = q => {
+  chosenQuality = q
+  document.querySelectorAll('.qual-btn').forEach(b => b.classList.remove('sel'))
+  document.getElementById('q-'+q).classList.add('sel')
+}
+
+// ── FILE ──────────────────────────────────────────────────
+const dz = document.getElementById('dz')
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag') })
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'))
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files[0]) pickFile(e.dataTransfer.files[0]) })
+
+window.pickFile = f => {
+  if (!f) return
+  selFile = f
+  document.getElementById('fName').textContent = f.name
+  document.getElementById('fSize').textContent = (f.size/1024/1024).toFixed(2)+' MB'
+  document.getElementById('fRow').classList.add('show')
+  document.getElementById('eb').classList.remove('show')
+  document.getElementById('goBtn').disabled = false
+}
+
+window.rmFile = () => {
+  selFile = null
+  document.getElementById('fi').value = ''
+  document.getElementById('fRow').classList.remove('show')
+  document.getElementById('goBtn').disabled = true
+}
+
+// ── TRANSCRIBE ────────────────────────────────────────────
+window.doGo = async () => {
+  if (!selFile) return
+  if (!sess && gSec() >= GUEST_MAX) { openModal('loginM'); return }
+  if (sess && uData) {
+    const lim = PLAN_LIM[uData.plan]||PLAN_LIM.free
+    if (uData.usage_seconds >= lim) { openPricing('You have used all your free minutes. Upgrade to continue!'); return }
+  }
+
+  const btn=document.getElementById('goBtn'), pw=document.getElementById('pw')
+  const pf=document.getElementById('pf'), pm=document.getElementById('pm')
+
+  btn.disabled=true; btn.textContent='⏳ Processing...'
+  pw.classList.add('show'); document.getElementById('eb').classList.remove('show')
+  document.getElementById('outCard').classList.remove('show')
+  disableExports(true)
+
+  pf.style.width='15%'; pm.textContent='Uploading file...'
+  const t1=setTimeout(()=>{pf.style.width='55%';pm.textContent='AI is transcribing...'},1500)
+  const t2=setTimeout(()=>{pf.style.width='80%';pm.textContent='Almost done...'},8000)
+
+  const fd=new FormData()
+  fd.append('file', selFile)
+  fd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
+  const url     = sess ? BACKEND+'/transcribe' : BACKEND+'/transcribe-guest'
+  const headers = sess ? {Authorization:`Bearer ${sess.access_token}`} : {}
+
+  try {
+    const resp = await fetch(url,{method:'POST',headers,body:fd})
+    clearTimeout(t1); clearTimeout(t2)
+
+    if (!resp.ok) {
+      const err=await resp.json().catch(()=>({}))
+      const det=err.detail||''
+      if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes. Upgrade to continue!'); return }
+      if (resp.status===401) { await sb.auth.signOut(); sess=null; uData=null; renderUI(); pw.classList.remove('show'); resetBtn(); showErr('Session expired. Please refresh.'); return }
+      throw new Error(det||'Server error '+resp.status)
+    }
+
+    const data = await resp.json()
+    rawTxt   = data.text || ''
+    segments = data.segments || []
+
+    if (sess && data.usage) { uData.usage_seconds=data.usage.used; renderUI() }
+    if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM'),1200) }
+
+    pf.style.width='100%'; pm.textContent='Done! ✓'
+
+    // If user chose Hindi, show directly. Else convert.
+    if (chosenFmt === 'hindi') {
+      displayTxt = rawTxt
+      setTimeout(()=>{ pw.classList.remove('show'); showOut(); resetBtn() },400)
+    } else {
+      setTimeout(async ()=>{ pw.classList.remove('show'); resetBtn(); await convertAndShow(chosenFmt) },400)
+    }
+
+  } catch(e) {
+    clearTimeout(t1); clearTimeout(t2)
+    pw.classList.remove('show'); resetBtn()
+    showErr(e.message.includes('fetch')||e.message.includes('Network')
+      ? 'Cannot connect to server. Wait 30 seconds and try again.'
+      : e.message)
+  }
+}
+
+// ── CONVERT ───────────────────────────────────────────────
+async function convertAndShow(fmt) {
+  const conv=document.getElementById('converting')
+  const msg=document.getElementById('convertMsg')
+  conv.classList.add('show')
+  msg.textContent = fmt==='hinglish' ? 'Converting to Hinglish...' : 'Translating to English...'
+  document.getElementById('outCard').classList.add('show')
+  document.getElementById('ob').textContent = rawTxt
+  document.getElementById('ob').style.opacity = '0.4'
+
+  try {
+    const fd=new FormData()
+    fd.append('text', rawTxt)
+    fd.append('target', fmt)
+    const resp = await fetch(BACKEND+'/convert',{method:'POST',body:fd})
+    if (!resp.ok) throw new Error('Conversion failed')
+    const data = await resp.json()
+    displayTxt = data.text
+  } catch(e) {
+    displayTxt = rawTxt
+    toast('Conversion failed — showing Hindi transcript')
+  }
+
+  conv.classList.remove('show')
+  document.getElementById('ob').style.opacity = '1'
+  showOut()
+}
+
+function showOut() {
+  showTs = false
+  convertedSegments = []  // reset so they get re-converted for new transcript
+  document.getElementById('tsToggle').classList.remove('on')
+  document.getElementById('ob').textContent = displayTxt
+  const words = displayTxt.trim().split(/\s+/).length
+  let meta = words+' words · '+displayTxt.length+' chars'
+  if (segments.length) meta += ' · '+segments.length+' segments'
+  document.getElementById('om').textContent = meta
+  document.getElementById('outCard').classList.add('show')
+  document.getElementById('outCard').scrollIntoView({behavior:'smooth'})
+  disableExports(false)
+}
+
+// ── EXPORTS (enabled/disabled) ────────────────────────────
+function disableExports(off) {
+  ['exp-copy','exp-txt','exp-srt','exp-pdf','exp-docx'].forEach(id => {
+    document.getElementById(id)?.classList.toggle('active', !off)
+  })
+  document.getElementById('tsWrap')?.classList.toggle('active', !off)
+}
+
+// ── TIMESTAMPS ────────────────────────────────────────────
+let convertedSegments = []  // segments in chosen format
+
+async function prepareSegments() {
+  // If Hindi, use raw segments directly
+  if (chosenFmt === 'hindi' || !segments.length) {
+    convertedSegments = segments
+    return
+  }
+  // For Hinglish/English, convert each segment text
+  const conv = document.getElementById('converting')
+  const msg  = document.getElementById('convertMsg')
+  conv.classList.add('show')
+  msg.textContent = 'Preparing timestamps...'
+  try {
+    const allSegText = segments.map(s => s.text.trim()).join('\n')
+    const fd = new FormData()
+    fd.append('text', allSegText)
+    fd.append('target', chosenFmt)
+    const resp = await fetch(BACKEND+'/convert', {method:'POST', body:fd})
+    if (resp.ok) {
+      const data = await resp.json()
+      const convertedLines = data.text.split('\n').filter(l => l.trim())
+      convertedSegments = segments.map((s, i) => ({
+        ...s,
+        text: convertedLines[i] || s.text
+      }))
+    } else {
+      convertedSegments = segments
+    }
+  } catch(e) {
+    convertedSegments = segments
+  }
+  conv.classList.remove('show')
+}
+
+window.toggleTs = async () => {
+  showTs = !showTs
+  document.getElementById('tsToggle').classList.toggle('on', showTs)
+  const ob = document.getElementById('ob')
+
+  if (!showTs || !segments.length) {
+    ob.textContent = displayTxt; return
+  }
+
+  // Prepare converted segments if not done yet
+  if (!convertedSegments.length) {
+    await prepareSegments()
+  }
+
+  ob.innerHTML = convertedSegments.map(s => {
+    const m   = Math.floor(s.start/60).toString().padStart(2,'0')
+    const sec = Math.floor(s.start%60).toString().padStart(2,'0')
+    return '<span style="color:var(--accent);font-size:11px;font-weight:700;margin-right:8px;font-family:monospace">['+m+':'+sec+']</span>'+s.text.trim()+'<br><br>'
+  }).join('')
+}
+
+// ── COPY ──────────────────────────────────────────────────
+window.cpText = () => {
+  if (!displayTxt) return
+  navigator.clipboard.writeText(displayTxt).then(()=>toast('Copied to clipboard!'))
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function getFileName(ext) { return (selFile?.name?.replace(/[^a-zA-Z0-9]/g,'_')||'transcript')+'_transcript.'+ext }
+function dlBlob(content, type, name) {
+  const a=document.createElement('a')
+  a.href=URL.createObjectURL(new Blob([content],{type}))
+  a.download=name; a.click()
+}
+function srtTime(sec) {
+  const h=Math.floor(sec/3600).toString().padStart(2,'0')
+  const m=Math.floor((sec%3600)/60).toString().padStart(2,'0')
+  const s=Math.floor(sec%60).toString().padStart(2,'0')
+  const ms=Math.floor((sec%1)*1000).toString().padStart(3,'0')
+  return h+':'+m+':'+s+','+ms
+}
+
+// ── DOWNLOAD TXT ──────────────────────────────────────────
+window.dlText = () => { if(!displayTxt) return; dlBlob(displayTxt,'text/plain',getFileName('txt')) }
+
+// ── DOWNLOAD SRT ──────────────────────────────────────────
+window.dlSRT = () => {
+  if (!segments.length) { toast('No timestamp data available'); return }
+  const srt = segments.map((s,i)=>(i+1)+'\n'+srtTime(s.start)+' --> '+srtTime(s.end)+'\n'+s.text.trim()+'\n').join('\n')
+  dlBlob(srt,'text/plain',getFileName('srt'))
+}
+
+// ── DOWNLOAD PDF ──────────────────────────────────────────
+window.dlPDF = () => {
+  if (!displayTxt) return
+  try {
+    const { jsPDF } = window.jspdf
+    const doc = new jsPDF({unit:'mm',format:'a4'})
+    doc.setFont('helvetica'); doc.setFontSize(16); doc.setTextColor(40,40,40)
+    doc.text('Transcript', 20, 20)
+    doc.setFontSize(10); doc.setTextColor(120,120,120)
+    doc.text('File: '+(selFile?.name||'Audio'), 20, 28)
+    doc.text('Format: '+chosenFmt.charAt(0).toUpperCase()+chosenFmt.slice(1), 20, 33)
+    doc.text('Date: '+new Date().toLocaleDateString(), 20, 38)
+    doc.setDrawColor(200,200,200); doc.line(20,42,190,42)
+    doc.setFontSize(11); doc.setTextColor(40,40,40)
+    doc.text(doc.splitTextToSize(displayTxt,170), 20, 50)
+    doc.save(getFileName('pdf'))
+  } catch(e) { toast('PDF failed. Try TXT.') }
+}
+
+// ── DOWNLOAD DOCX ─────────────────────────────────────────
+window.dlDOCX = async () => {
+  if (!displayTxt) return
+  try {
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx
+    const paras = [
+      new Paragraph({text:'Transcript',heading:HeadingLevel.HEADING_1}),
+      new Paragraph({children:[new TextRun({text:'File: '+(selFile?.name||'Audio'),color:'888888',size:20})]}),
+      new Paragraph({children:[new TextRun({text:'Format: '+chosenFmt,color:'888888',size:20})]}),
+      new Paragraph({children:[new TextRun({text:'Date: '+new Date().toLocaleDateString(),color:'888888',size:20})]}),
+      new Paragraph({text:''}),
+      ...displayTxt.split(/\n+/).filter(p=>p.trim()).map(p=>new Paragraph({children:[new TextRun({text:p.trim(),size:24})]}))
+    ]
+    const blob = await Packer.toBlob(new Document({sections:[{properties:{},children:paras}]}))
+    dlBlob(blob,'application/vnd.openxmlformats-officedocument.wordprocessingml.document',getFileName('docx'))
+  } catch(e) { toast('DOCX failed. Try TXT.') }
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function resetBtn() {
+  const btn=document.getElementById('goBtn')
+  btn.textContent='▶ Transcribe Now'; btn.disabled=!selFile
+}
+function showErr(msg) {
+  const eb=document.getElementById('eb'); eb.textContent='⚠ '+msg; eb.classList.add('show')
+}
+function toast(msg) {
+  document.getElementById('tMsg').textContent=msg
+  const el=document.getElementById('toast'); el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500)
+}
+
+// ── PRICING ───────────────────────────────────────────────
+window.selPlan = p => {
+  sPlan=p
+  document.querySelectorAll('.plan').forEach(c=>c.classList.remove('sel'))
+  document.getElementById('c-'+p).classList.add('sel')
+  document.getElementById('payBtn').textContent=`Pay ₹${p==='starter'?99:299}/month →`
+}
+window.doPay = async () => {
+  if (!sess) { closeModal('priceM'); openModal('loginM'); return }
+  const pb=document.getElementById('payBtn')
+  pb.disabled=true; pb.textContent='Creating order...'
+  try {
+    const fd=new FormData(); fd.append('plan',sPlan)
+    const r=await fetch(BACKEND+'/create-order',{method:'POST',headers:{Authorization:`Bearer ${sess.access_token}`},body:fd})
+    const order=await r.json()
+    new Razorpay({
+      key:RZ_KEY,amount:order.amount,currency:'INR',
+      name:'BolToText',description:sPlan+' Plan',
+      order_id:order.order_id,prefill:{email:order.email},
+      theme:{color:'#f97316'},
+      handler:async res=>{
+        const vfd=new FormData()
+        vfd.append('razorpay_order_id',res.razorpay_order_id)
+        vfd.append('razorpay_payment_id',res.razorpay_payment_id)
+        vfd.append('razorpay_signature',res.razorpay_signature)
+        vfd.append('plan',sPlan)
+        const vr=await fetch(BACKEND+'/verify-payment',{method:'POST',headers:{Authorization:`Bearer ${sess.access_token}`},body:vfd})
+        const vd=await vr.json()
+        if(vd.success){closeModal('priceM');await loadUser();renderUI();toast('🎉 '+sPlan.toUpperCase()+' plan activated!')}
+      },
+      modal:{ondismiss:()=>{pb.disabled=false;pb.textContent=`Pay ₹${sPlan==='starter'?99:299}/month →`}}
+    }).open()
+  } catch(e){toast('Error: '+e.message);pb.disabled=false}
+}
+
+// Init exports as disabled
+disableExports(true)
+init()
+</script>
+</body>
+</html>
