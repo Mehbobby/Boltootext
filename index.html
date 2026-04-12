@@ -398,35 +398,49 @@ const addG  = s  => localStorage.setItem('btt_g', gSec()+s)
 
 // ── INIT ──────────────────────────────────────────────────
 async function init() {
-  // Handle PKCE flow — code in URL params
+  console.log('URL:', window.location.href)
+  console.log('Search:', window.location.search)
+  console.log('Hash:', window.location.hash)
+
+  // Supabase v2 PKCE — code comes in ?code= param
   const urlParams = new URLSearchParams(window.location.search)
   const code = urlParams.get('code')
+
   if (code) {
+    console.log('Found code, exchanging...')
     try {
-      await sb.auth.exchangeCodeForSession(code)
-    } catch(e) { console.log('code exchange err', e) }
-    window.history.replaceState({}, '', window.location.pathname)
+      const { data, error } = await sb.auth.exchangeCodeForSession(code)
+      console.log('Exchange result:', data, error)
+    } catch(e) { console.log('Exchange error:', e) }
+    // Clean URL
+    const cleanUrl = window.location.origin + window.location.pathname
+    window.history.replaceState({}, '', cleanUrl)
   }
 
-  // Handle legacy implicit flow — access_token in hash
+  // Also handle hash-based (older Supabase)
   const hash = window.location.hash
-  if (!code && hash.includes('access_token')) {
-    const p = new URLSearchParams(hash.slice(1))
+  if (!code && hash && hash.includes('access_token')) {
+    console.log('Found hash token')
+    const p = new URLSearchParams(hash.replace('#',''))
     try {
       await sb.auth.setSession({
-        access_token: p.get('access_token'),
+        access_token:  p.get('access_token'),
         refresh_token: p.get('refresh_token')
       })
-    } catch(e) { console.log('hash session err', e) }
+    } catch(e) { console.log('Hash session error:', e) }
     window.history.replaceState({}, '', window.location.pathname)
   }
 
-  const { data } = await sb.auth.getSession()
+  // Get session
+  const { data, error } = await sb.auth.getSession()
+  console.log('Session:', data?.session?.user?.email, 'Error:', error)
   sess = data?.session || null
-  if (sess) await Promise.race([loadUser(), new Promise(r=>setTimeout(r,5000))])
+
+  if (sess) await Promise.race([loadUser(), new Promise(r => setTimeout(r, 5000))])
   renderUI()
 
   sb.auth.onAuthStateChange(async (_e, s) => {
+    console.log('Auth change:', _e, s?.user?.email)
     sess = s; uData = null
     if (s) await loadUser()
     renderUI()
@@ -502,7 +516,18 @@ window.closeDD  = () => document.getElementById('avDD')?.classList.remove('open'
 document.addEventListener('click', e => { if (!e.target.closest('.av-wrap')) closeDD() })
 
 // ── AUTH ──────────────────────────────────────────────────
-window.doLogin = () => sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:location.origin+location.pathname }})
+window.doLogin = async () => {
+  const redirectTo = 'https://mehbobby.github.io/Boltootext/'
+  console.log('Redirecting to:', redirectTo)
+  const { data, error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectTo,
+      queryParams: { access_type: 'offline', prompt: 'consent' }
+    }
+  })
+  if (error) { console.error('Login error:', error); toast('Login error: ' + error.message) }
+}
 window.doLogout = async () => { await sb.auth.signOut(); sess=null; uData=null; renderUI() }
 window.openModal = (id, reason) => {
   if (id === 'loginM' && reason === 'limit') {
