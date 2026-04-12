@@ -449,10 +449,35 @@ async function init() {
 
 async function loadUser() {
   try {
-    const r = await fetch(BACKEND+'/me',{headers:{Authorization:`Bearer ${sess.access_token}`}})
-    if (r.ok) uData = await r.json()
-    else { await sb.auth.signOut(); sess=null }
-  } catch(e){}
+    const r = await fetch(BACKEND+'/me', {
+      headers: { Authorization: `Bearer ${sess.access_token}` }
+    })
+    if (r.ok) {
+      uData = await r.json()
+      console.log('User loaded:', uData.email, 'Plan:', uData.plan)
+    } else {
+      // Don't sign out - backend might be sleeping (30s wake up)
+      // Just show logged in state with default free plan
+      console.log('Backend returned:', r.status, '- using default plan')
+      uData = {
+        email: sess.user.email,
+        plan: 'free',
+        usage_seconds: 0,
+        limit_seconds: 600
+      }
+    }
+  } catch(e) {
+    console.log('loadUser network error:', e)
+    // Backend might be sleeping - use session data
+    if (sess?.user) {
+      uData = {
+        email: sess.user.email,
+        plan: 'free',
+        usage_seconds: 0,
+        limit_seconds: 600
+      }
+    }
+  }
 }
 
 // ── RENDER ────────────────────────────────────────────────
