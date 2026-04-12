@@ -1,306 +1,341 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Header
+from fastapi import FastAPI, File, UploadFile, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import httpx, os, hmac, hashlib
-from supabase import create_client
-from datetime import datetime, timedelta, timezone
+import httpx
+import os
+import hmac
+import hashlib
+import json
+from typing import Optional
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-GROQ_API_KEY         = os.environ.get("GROQ_API_KEY", "")
-SUPABASE_URL         = os.environ.get("SUPABASE_URL", "")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
-RAZORPAY_KEY_ID      = os.environ.get("RAZORPAY_KEY_ID", "")
-RAZORPAY_KEY_SECRET  = os.environ.get("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
-PLAN_LIMITS = {"free": 10*60, "starter": 120*60, "pro": 99999*60}
-PLAN_PRICES = {"starter": 9900, "pro": 29900}
+PLAN_LIMITS = {
+    "free": 10 * 60,       # 10 min in seconds
+    "starter": 120 * 60,   # 120 min
+    "pro": 500 * 60        # 500 min
+}
 
-def sb():
-    return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-def cur_month():
-    return datetime.now().strftime("%Y-%m")
-
-def get_user(token):
+async def get_user_from_token(authorization: str) -> Optional[dict]:
+    """Verify token with Supabase and return user info"""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    
+    token = authorization.replace("Bearer ", "").strip()
+    
     try:
-        return sb().auth.get_user(token).user
-    except:
-        raise HTTPException(401, "Login karo pehle!")
-
-def get_plan(uid):
-    try:
-        r = sb().table("subscriptions").select("plan,valid_until").eq("user_id", uid).single().execute()
-        if r.data:
-            v = r.data.get("valid_until")
-            if v and datetime.fromisoformat(v.replace("Z","+00:00")) < datetime.now(timezone.utc):
-                return "free"
-            return r.data["plan"]
-    except:
-        pass
-    return "free"
-
-def get_usage(uid):
-    try:
-        r = sb().table("usage").select("seconds_used").eq("user_id", uid).eq("month_year", cur_month()).single().execute()
-        return r.data["seconds_used"] if r.data else 0
-    except:
-        return 0
-
-def add_usage(uid, secs):
-    m = cur_month()
-    try:
-        ex = sb().table("usage").select("id,seconds_used").eq("user_id", uid).eq("month_year", m).single().execute()
-        if ex.data:
-            sb().table("usage").update({
-                "seconds_used": ex.data["seconds_used"] + secs,
-                "updated_at": datetime.now().isoformat()
-            }).eq("id", ex.data["id"]).execute()
-        else:
-            sb().table("usage").insert({
-                "user_id": uid, "seconds_used": secs, "month_year": m
-            }).execute()
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # Use Supabase's /auth/v1/user endpoint to verify token
+            resp = await client.get(
+                f"{SUPABASE_URL}/auth/v1/user",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "apikey": SUPABASE_SERVICE_KEY,
+                }
+            )
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                print(f"Token verify failed: {resp.status_code} {resp.text}")
+                return None
     except Exception as e:
-        print(f"Usage err: {e}")
+        print(f"Token verify error: {e}")
+        return None
 
-def verify_razorpay_signature(order_id, payment_id, signature):
-    msg = f"{order_id}|{payment_id}"
-    expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), msg.encode(), hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
-
-
-@app.get("/")
-def root():
-    return {"status": "BolToText API running ✅"}
-
-
-@app.get("/me")
-async def me(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Token nahi mila")
-    user = get_user(authorization.split(" ")[1])
-    uid  = str(user.id)
-    plan  = get_plan(uid)
-    used  = get_usage(uid)
-    limit = PLAN_LIMITS[plan]
-    return {
-        "email": user.email,
-        "plan": plan,
-        "usage_seconds": used,
-        "limit_seconds": limit,
-        "remaining_seconds": max(0, limit - used)
-    }
-
-
-@app.post("/transcribe")
-async def transcribe(
-    file: UploadFile = File(...),
-    model: str = Form("whisper-large-v3-turbo"),
-    language: str = Form(""),
-    authorization: str = Header(None),
-):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Login karo pehle!")
-
-    user = get_user(authorization.split(" ")[1])
-    uid  = str(user.id)
-    plan  = get_plan(uid)
-    used  = get_usage(uid)
-    limit = PLAN_LIMITS[plan]
-
-    if used >= limit:
-        raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
-
-    fb = await file.read()
-    if len(fb) > 25 * 1024 * 1024:
-        raise HTTPException(413, "25MB se badi file nahi chalegi!")
-
+async def get_user_usage(user_id: str) -> dict:
+    """Get user's current usage and plan from Supabase"""
     try:
-        data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
-        dur  = int(data.get("duration", 0)) + 1
-        add_usage(uid, dur)
-        new_used = used + dur
-        return {
-            **data,
-            "usage": {
-                "used": new_used,
-                "limit": limit,
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # Get subscription
+            sub_resp = await client.get(
+                f"{SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.{user_id}&select=*",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                }
+            )
+            plan = "free"
+            if sub_resp.status_code == 200:
+                subs = sub_resp.json()
+                if subs:
+                    plan = subs[0].get("plan", "free")
+
+            # Get usage this month
+            from datetime import datetime
+            month_start = datetime.now().strftime("%Y-%m-01")
+            usage_resp = await client.get(
+                f"{SUPABASE_URL}/rest/v1/usage?user_id=eq.{user_id}&created_at=gte.{month_start}&select=duration_seconds",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                }
+            )
+            used_seconds = 0
+            if usage_resp.status_code == 200:
+                records = usage_resp.json()
+                used_seconds = sum(r.get("duration_seconds", 0) for r in records)
+
+            return {
                 "plan": plan,
-                "remaining": max(0, limit - new_used)
+                "used_seconds": used_seconds,
+                "limit_seconds": PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
             }
+    except Exception as e:
+        print(f"Usage fetch error: {e}")
+        return {"plan": "free", "used_seconds": 0, "limit_seconds": PLAN_LIMITS["free"]}
+
+async def record_usage(user_id: str, duration_seconds: int):
+    """Record transcription usage"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(
+                f"{SUPABASE_URL}/rest/v1/usage",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={"user_id": user_id, "duration_seconds": duration_seconds}
+            )
+    except Exception as e:
+        print(f"Record usage error: {e}")
+
+async def do_transcription(file_bytes: bytes, filename: str) -> dict:
+    """Call Groq Whisper API"""
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        files = {"file": (filename, file_bytes, "audio/mpeg")}
+        data = {
+            "model": "whisper-large-v3-turbo",
+            "response_format": "verbose_json",
+            "temperature": "0",
         }
-    except httpx.TimeoutException:
-        raise HTTPException(504, "Timeout! Dobara try karo.")
-
-
-@app.post("/create-order")
-async def create_order(plan: str = Form(...), authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Login required")
-    if plan not in PLAN_PRICES:
-        raise HTTPException(400, "Invalid plan")
-
-    user = get_user(authorization.split(" ")[1])
-
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            "https://api.razorpay.com/v1/orders",
-            auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET),
-            json={
-                "amount": PLAN_PRICES[plan],
-                "currency": "INR",
-                "notes": {"user_id": str(user.id), "plan": plan}
-            }
-        )
-    if resp.status_code != 200:
-        raise HTTPException(500, "Order create nahi hua")
-
-    order = resp.json()
-    return {
-        "order_id": order["id"],
-        "amount": PLAN_PRICES[plan],
-        "currency": "INR",
-        "email": user.email
-    }
-
-
-@app.post("/verify-payment")
-async def verify_payment(
-    razorpay_order_id: str   = Form(...),
-    razorpay_payment_id: str = Form(...),
-    razorpay_signature: str  = Form(...),
-    plan: str                = Form(...),
-    authorization: str       = Header(None),
-):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Login required")
-
-    user = get_user(authorization.split(" ")[1])
-    uid  = str(user.id)
-
-    if not verify_razorpay_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature):
-        raise HTTPException(400, "Payment verify nahi hua!")
-
-    valid_until = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-    try:
-        ex = sb().table("subscriptions").select("id").eq("user_id", uid).single().execute()
-        if ex.data:
-            sb().table("subscriptions").update({
-                "plan": plan,
-                "valid_until": valid_until,
-                "razorpay_payment_id": razorpay_payment_id
-            }).eq("user_id", uid).execute()
-        else:
-            sb().table("subscriptions").insert({
-                "user_id": uid,
-                "plan": plan,
-                "valid_until": valid_until,
-                "razorpay_payment_id": razorpay_payment_id
-            }).execute()
-    except Exception as e:
-        raise HTTPException(500, str(e))
-
-    return {"success": True, "plan": plan}
-
-
-async def call_groq_whisper(fb: bytes, filename: str, content_type: str, model: str, language: str) -> dict:
-    """Call Groq Whisper API and return result"""
-    fd = {
-        "model": model,
-        "response_format": "verbose_json",
-        "temperature": "0",
-    }
-    # Only set language if user explicitly chose one
-    # For Hinglish (auto), let Whisper detect — forced "hi" causes translation issues
-    if language:
-        fd["language"] = language
-
-    async with httpx.AsyncClient(timeout=120.0) as client:
         resp = await client.post(
             "https://api.groq.com/openai/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-            files={"file": (filename, fb, content_type or "audio/mpeg")},
-            data=fd,
+            files=files,
+            data=data,
         )
-    if resp.status_code != 200:
-        err = resp.json().get("error", {})
-        raise HTTPException(resp.status_code, err.get("message", "Groq error"))
-    return resp.json()
+        if resp.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Groq error: {resp.text}")
+        return resp.json()
 
+@app.get("/me")
+async def get_me(authorization: str = Header(None)):
+    user = await get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    usage = await get_user_usage(user["id"])
+    return {
+        "id": user["id"],
+        "email": user.get("email", ""),
+        **usage
+    }
+
+@app.post("/transcribe")
+async def transcribe(file: UploadFile = File(...), authorization: str = Header(None)):
+    user = await get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    usage = await get_user_usage(user["id"])
+    remaining = usage["limit_seconds"] - usage["used_seconds"]
+    
+    if remaining <= 0:
+        raise HTTPException(status_code=403, detail="limit_exceeded")
+    
+    file_bytes = await file.read()
+    result = await do_transcription(file_bytes, file.filename)
+    
+    duration = int(result.get("duration", 60))
+    await record_usage(user["id"], duration)
+    
+    return {
+        "text": result.get("text", ""),
+        "segments": result.get("segments", []),
+        "duration": duration,
+        "usage": {
+            "used_seconds": usage["used_seconds"] + duration,
+            "limit_seconds": usage["limit_seconds"],
+            "plan": usage["plan"]
+        }
+    }
 
 @app.post("/transcribe-guest")
-async def transcribe_guest(
-    file: UploadFile = File(...),
-    model: str = Form("whisper-large-v3-turbo"),
-    language: str = Form(""),
-):
-    """No auth needed — guest gets 4 min, tracked client-side"""
-    fb = await file.read()
-    if len(fb) > 25*1024*1024:
-        raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    try:
-        data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
-        return data
-    except httpx.TimeoutException:
-        raise HTTPException(504, "Timeout! Try again.")
-
+async def transcribe_guest(file: UploadFile = File(...)):
+    file_bytes = await file.read()
+    result = await do_transcription(file_bytes, file.filename)
+    return {
+        "text": result.get("text", ""),
+        "segments": result.get("segments", []),
+        "duration": int(result.get("duration", 60))
+    }
 
 @app.post("/convert")
-async def convert_text(
-    text: str = Form(...),
-    target: str = Form(...),  # "hinglish" or "english"
-):
-    """Convert Hindi transcript to Hinglish or English using LLaMA"""
-
+async def convert_text(request: dict):
+    text = request.get("text", "")
+    target = request.get("target", "hinglish")
+    
+    if target == "hindi":
+        return {"converted": text}
+    
     if target == "hinglish":
-        prompt = f"""Convert this Hindi transcript to Hinglish (Roman script). 
-Rules:
-- Write exactly as an Indian would speak casually in Roman letters
-- Mix Hindi and English naturally like real conversation
-- Do NOT translate meaning, just convert the script/style
-- Keep English words as English
-- Example: "मैं कल घर जाऊंगा" → "Main kal ghar jaunga"
-- Example: "यह बहुत अच्छा है" → "Yeh bahut accha hai"
+        prompt = f"""Convert this Hindi text to Hinglish (Hindi words written in Roman/English script, keeping English words as-is). 
+Write EXACTLY as spoken, phonetically in Roman script. Do not translate meaning, just transliterate.
+Example: "यह बहुत अच्छा है" → "Yeh bahut accha hai"
+Text: {text}
+Output only the Hinglish text, nothing else."""
+    else:  # english
+        prompt = f"""Translate this Hindi/Hinglish text to English naturally.
+Text: {text}
+Output only the English translation, nothing else."""
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.3,
+                "max_tokens": 4000
+            }
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=500, detail="Conversion failed")
+        result = resp.json()
+        converted = result["choices"][0]["message"]["content"].strip()
+        return {"converted": converted}
 
-Hindi transcript:
-{text}
-
-Hinglish output (only output the converted text, nothing else):"""
-
-    elif target == "english":
-        prompt = f"""Translate this Hindi/Hinglish transcript to natural English.
-- Keep the meaning accurate
-- Use natural conversational English
-- Do not add extra words or change meaning
-
-Transcript:
-{text}
-
-English translation (only output the translation, nothing else):"""
+@app.post("/convert-segments")
+async def convert_segments(request: dict):
+    segments = request.get("segments", [])
+    target = request.get("target", "hinglish")
+    
+    if target == "hindi" or not segments:
+        return {"segments": segments}
+    
+    # Join all segment texts for batch conversion
+    texts = [s.get("text", "") for s in segments]
+    combined = "\n---\n".join(texts)
+    
+    if target == "hinglish":
+        prompt = f"""Convert each Hindi text segment to Hinglish (Roman script phonetically). Keep English words as-is.
+Each segment is separated by ---
+Convert each one and return them separated by ---
+Segments:
+{combined}
+Output only converted segments separated by ---, nothing else."""
     else:
-        raise HTTPException(400, "Invalid target. Use 'hinglish' or 'english'")
+        prompt = f"""Translate each Hindi/Hinglish segment to English naturally.
+Each segment is separated by ---
+Translate each one and return them separated by ---
+Segments:
+{combined}
+Output only translated segments separated by ---, nothing else."""
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.3,
+                "max_tokens": 4000
+            }
+        )
+        if resp.status_code != 200:
+            return {"segments": segments}
+        
+        result = resp.json()
+        converted_text = result["choices"][0]["message"]["content"].strip()
+        converted_parts = converted_text.split("---")
+        
+        converted_segments = []
+        for i, seg in enumerate(segments):
+            converted_seg = dict(seg)
+            if i < len(converted_parts):
+                converted_seg["text"] = converted_parts[i].strip()
+            converted_segments.append(converted_seg)
+        
+        return {"segments": converted_segments}
 
+@app.post("/create-order")
+async def create_order(request: dict):
+    plan = request.get("plan", "starter")
+    prices = {"starter": 9900, "pro": 29900}  # in paise
+    amount = prices.get(plan, 9900)
+    
+    import base64
+    auth = base64.b64encode(f"{RAZORPAY_KEY_ID}:{RAZORPAY_KEY_SECRET}".encode()).decode()
+    
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            "https://api.razorpay.com/v1/orders",
+            headers={"Authorization": f"Basic {auth}", "Content-Type": "application/json"},
+            json={"amount": amount, "currency": "INR", "receipt": f"order_{plan}"}
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=500, detail="Order creation failed")
+        return resp.json()
+
+@app.post("/verify-payment")
+async def verify_payment(request: dict, authorization: str = Header(None)):
+    user = await get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    order_id = request.get("razorpay_order_id", "")
+    payment_id = request.get("razorpay_payment_id", "")
+    signature = request.get("razorpay_signature", "")
+    plan = request.get("plan", "starter")
+    
+    expected = hmac.new(
+        RAZORPAY_KEY_SECRET.encode(),
+        f"{order_id}|{payment_id}".encode(),
+        hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(expected, signature):
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Update subscription
+    from datetime import datetime
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(
-                "https://api.groq.com/openai/v1/chat/completions",
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(
+                f"{SUPABASE_URL}/rest/v1/subscriptions",
                 headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=merge-duplicates"
                 },
                 json={
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.3,
-                    "max_tokens": 4000,
+                    "user_id": user["id"],
+                    "plan": plan,
+                    "updated_at": datetime.now().isoformat()
                 }
             )
-        if resp.status_code != 200:
-            raise HTTPException(500, "Conversion failed")
-        
-        data = resp.json()
-        converted = data["choices"][0]["message"]["content"].strip()
-        return {"text": converted, "target": target}
+    except Exception as e:
+        print(f"Subscription update error: {e}")
+    
+    return {"success": True, "plan": plan}
 
-    except httpx.TimeoutException:
-        raise HTTPException(504, "Conversion timed out. Try again.")
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
