@@ -641,7 +641,27 @@ window.doGo = async () => {
       const err=await resp.json().catch(()=>({}))
       const det=err.detail||''
       if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes. Upgrade to continue!'); return }
-      if (resp.status===401) { await sb.auth.signOut(); sess=null; uData=null; renderUI(); pw.classList.remove('show'); resetBtn(); showErr('Session expired. Please refresh.'); return }
+      if (resp.status===401) {
+        // Backend token issue — fallback to guest transcription
+        console.log('Backend 401, trying guest endpoint...')
+        pw.classList.remove('show')
+        resetBtn()
+        // Retry with guest endpoint
+        const gfd = new FormData()
+        gfd.append('file', selFile)
+        gfd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
+        const gResp = await fetch(BACKEND+'/transcribe-guest', {method:'POST', body:gfd})
+        if (gResp.ok) {
+          const gData = await gResp.json()
+          rawTxt = gData.text || ''
+          segments = gData.segments || []
+          if (chosenFmt === 'hindi') { displayTxt = rawTxt; showOut() }
+          else { await convertAndShow(chosenFmt) }
+        } else {
+          showErr('Server error. Please try again in 30 seconds.')
+        }
+        return
+      }
       throw new Error(det||'Server error '+resp.status)
     }
 
