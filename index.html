@@ -398,18 +398,36 @@ const addG  = s  => localStorage.setItem('btt_g', gSec()+s)
 
 // ── INIT ──────────────────────────────────────────────────
 async function init() {
-  const hash = window.location.hash
-  if (hash.includes('access_token')) {
-    const p = new URLSearchParams(hash.slice(1))
-    try { await sb.auth.setSession({ access_token:p.get('access_token'), refresh_token:p.get('refresh_token') }) } catch(e){}
+  // Handle PKCE flow — code in URL params
+  const urlParams = new URLSearchParams(window.location.search)
+  const code = urlParams.get('code')
+  if (code) {
+    try {
+      await sb.auth.exchangeCodeForSession(code)
+    } catch(e) { console.log('code exchange err', e) }
     window.history.replaceState({}, '', window.location.pathname)
   }
+
+  // Handle legacy implicit flow — access_token in hash
+  const hash = window.location.hash
+  if (!code && hash.includes('access_token')) {
+    const p = new URLSearchParams(hash.slice(1))
+    try {
+      await sb.auth.setSession({
+        access_token: p.get('access_token'),
+        refresh_token: p.get('refresh_token')
+      })
+    } catch(e) { console.log('hash session err', e) }
+    window.history.replaceState({}, '', window.location.pathname)
+  }
+
   const { data } = await sb.auth.getSession()
   sess = data?.session || null
   if (sess) await Promise.race([loadUser(), new Promise(r=>setTimeout(r,5000))])
   renderUI()
-  sb.auth.onAuthStateChange(async (_e,s) => {
-    sess=s; uData=null
+
+  sb.auth.onAuthStateChange(async (_e, s) => {
+    sess = s; uData = null
     if (s) await loadUser()
     renderUI()
   })
