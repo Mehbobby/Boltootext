@@ -623,71 +623,105 @@ window.doGo = async () => {
   document.getElementById('outCard').classList.remove('show')
   disableExports(true)
 
-  pf.style.width='15%'; pm.textContent='Uploading file...'
-  const t1=setTimeout(()=>{pf.style.width='55%';pm.textContent='AI is transcribing...'},1500)
-  const t2=setTimeout(()=>{pf.style.width='80%';pm.textContent='Almost done...'},8000)
+  const model = chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo'
 
-  const fd=new FormData()
-  fd.append('file', selFile)
-  fd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
-  const url     = sess ? BACKEND+'/transcribe' : BACKEND+'/transcribe-guest'
-  const headers = sess ? {Authorization:`Bearer ${sess.access_token}`} : {}
+  // Try transcription with auto-retry (server might be sleeping)
+  async function attemptTranscribe(isRetry = false) {
+    if (isRetry) {
+      pf.style.width='20%'; pm.textContent='Server waking up, retrying...'
+    } else {
+      pf.style.width='15%'; pm.textContent='Uploading file...'
+      setTimeout(()=>{ if(pf.style.width==='15%') { pf.style.width='50%'; pm.textContent='AI is transcribing...' }}, 2000)
+      setTimeout(()=>{ if(pf.style.width==='50%') { pf.style.width='80%'; pm.textContent='Almost done...' }}, 10000)
+    }
+
+    const fd = new FormData()
+    fd.append('file', selFile)
+    fd.append('model', model)
+
+    // Always try guest endpoint first if backend has auth issues
+    const useGuest = !sess || isRetry
+    const url     = useGuest ? BACKEND+'/transcribe-guest' : BACKEND+'/transcribe'
+    const headers = useGuest ? {} : {Authorization:`Bearer ${sess.access_token}`}
+
+    try {
+      const resp = await fetch(url, {method:'POST', headers, body:fd})
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(()=>({}))
+        const det = err.detail||''
+
+        if (det.startsWith('LIMIT_EXCEEDED')) {
+          pw.classList.remove('show'); resetBtn()
+          openPricing('You have used all your free minutes. Upgrade to continue!')
+          return
+        }
+        if ((resp.status===401 || resp.status===500) && !isRetry) {
+          // Retry with guest endpoint
+          console.log('Auth issue, retrying with guest endpoint...')
+          await new Promise(r=>setTimeout(r,1000))
+          await attemptTranscribe(true)
+          return
+        }
+        if (!isRetry) {
+          // Server might be sleeping - wait and retry
+          pm.textContent='Server waking up... (30s)'
+          pf.style.width='25%'
+          await new Promise(r=>setTimeout(r,30000))
+          await attemptTranscribe(true)
+          return
+        }
+        throw new Error(det||'Server error '+resp.status)
+      }
+
+      const data = await resp.json()
+      rawTxt   = data.text || ''
+      segments = data.segments || []
+
+      // Update usage
+      if (sess && data.usage) {
+        uData.usage_seconds = data.usage.used
+        renderUI()
+      } else if (sess && !useGuest) {
+        // Manually increment usage display
+        const dur = parseInt(data.duration||0)+1
+        if (uData) uData.usage_seconds = (uData.usage_seconds||0) + dur
+        renderUI()
+      }
+      if (!sess || useGuest) {
+        addG(parseInt(data.duration||0)+1)
+        renderUI()
+        if (gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM','limit'),1200)
+      }
+
+      pf.style.width='100%'; pm.textContent='Done! ✓'
+      if (chosenFmt==='hindi') {
+        displayTxt = rawTxt
+        setTimeout(()=>{ pw.classList.remove('show'); showOut(); resetBtn() },400)
+      } else {
+        setTimeout(async ()=>{ pw.classList.remove('show'); resetBtn(); await convertAndShow(chosenFmt) },400)
+      }
+
+    } catch(e) {
+      if (!isRetry) {
+        console.log('First attempt failed, retrying...', e)
+        pm.textContent='Retrying...'
+        await new Promise(r=>setTimeout(r,3000))
+        await attemptTranscribe(true)
+      } else {
+        pw.classList.remove('show'); resetBtn()
+        showErr(e.message.includes('fetch')||e.message.includes('Network')
+          ? 'Cannot connect. Try again in 30 seconds.'
+          : e.message)
+      }
+    }
+  }
 
   try {
-    const resp = await fetch(url,{method:'POST',headers,body:fd})
-    clearTimeout(t1); clearTimeout(t2)
-
-    if (!resp.ok) {
-      const err=await resp.json().catch(()=>({}))
-      const det=err.detail||''
-      if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes. Upgrade to continue!'); return }
-      if (resp.status===401) {
-        // Backend token issue — fallback to guest transcription
-        console.log('Backend 401, trying guest endpoint...')
-        pw.classList.remove('show')
-        resetBtn()
-        // Retry with guest endpoint
-        const gfd = new FormData()
-        gfd.append('file', selFile)
-        gfd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
-        const gResp = await fetch(BACKEND+'/transcribe-guest', {method:'POST', body:gfd})
-        if (gResp.ok) {
-          const gData = await gResp.json()
-          rawTxt = gData.text || ''
-          segments = gData.segments || []
-          if (chosenFmt === 'hindi') { displayTxt = rawTxt; showOut() }
-          else { await convertAndShow(chosenFmt) }
-        } else {
-          showErr('Server error. Please try again in 30 seconds.')
-        }
-        return
-      }
-      throw new Error(det||'Server error '+resp.status)
-    }
-
-    const data = await resp.json()
-    rawTxt   = data.text || ''
-    segments = data.segments || []
-
-    if (sess && data.usage) { uData.usage_seconds=data.usage.used; renderUI() }
-    if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM','limit'),1200) }
-
-    pf.style.width='100%'; pm.textContent='Done! ✓'
-
-    // If user chose Hindi, show directly. Else convert.
-    if (chosenFmt === 'hindi') {
-      displayTxt = rawTxt
-      setTimeout(()=>{ pw.classList.remove('show'); showOut(); resetBtn() },400)
-    } else {
-      setTimeout(async ()=>{ pw.classList.remove('show'); resetBtn(); await convertAndShow(chosenFmt) },400)
-    }
-
+    await attemptTranscribe(false)
   } catch(e) {
-    clearTimeout(t1); clearTimeout(t2)
     pw.classList.remove('show'); resetBtn()
-    showErr(e.message.includes('fetch')||e.message.includes('Network')
-      ? 'Cannot connect to server. Wait 30 seconds and try again.'
-      : e.message)
+    showErr('Something went wrong. Please try again.')
   }
 }
 
