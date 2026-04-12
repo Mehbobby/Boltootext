@@ -625,103 +625,78 @@ window.doGo = async () => {
 
   const model = chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo'
 
-  // Try transcription with auto-retry (server might be sleeping)
-  async function attemptTranscribe(isRetry = false) {
-    if (isRetry) {
-      pf.style.width='20%'; pm.textContent='Server waking up, retrying...'
-    } else {
-      pf.style.width='15%'; pm.textContent='Uploading file...'
-      setTimeout(()=>{ if(pf.style.width==='15%') { pf.style.width='50%'; pm.textContent='AI is transcribing...' }}, 2000)
-      setTimeout(()=>{ if(pf.style.width==='50%') { pf.style.width='80%'; pm.textContent='Almost done...' }}, 10000)
-    }
+  pf.style.width='15%'; pm.textContent='Uploading file...'
+  const t1 = setTimeout(()=>{ pf.style.width='55%'; pm.textContent='AI is transcribing...' }, 2000)
+  const t2 = setTimeout(()=>{ pf.style.width='80%'; pm.textContent='Almost done...' }, 10000)
 
-    const fd = new FormData()
-    fd.append('file', selFile)
-    fd.append('model', model)
+  const fd = new FormData()
+  fd.append('file', selFile)
+  fd.append('model', model)
 
-    // Always try guest endpoint first if backend has auth issues
-    const useGuest = !sess || isRetry
-    const url     = useGuest ? BACKEND+'/transcribe-guest' : BACKEND+'/transcribe'
-    const headers = useGuest ? {} : {Authorization:`Bearer ${sess.access_token}`}
-
-    try {
-      const resp = await fetch(url, {method:'POST', headers, body:fd})
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(()=>({}))
-        const det = err.detail||''
-
-        if (det.startsWith('LIMIT_EXCEEDED')) {
-          pw.classList.remove('show'); resetBtn()
-          openPricing('You have used all your free minutes. Upgrade to continue!')
-          return
-        }
-        if ((resp.status===401 || resp.status===500) && !isRetry) {
-          // Retry with guest endpoint
-          console.log('Auth issue, retrying with guest endpoint...')
-          await new Promise(r=>setTimeout(r,1000))
-          await attemptTranscribe(true)
-          return
-        }
-        if (!isRetry) {
-          // Server might be sleeping - wait and retry
-          pm.textContent='Server waking up... (30s)'
-          pf.style.width='25%'
-          await new Promise(r=>setTimeout(r,30000))
-          await attemptTranscribe(true)
-          return
-        }
-        throw new Error(det||'Server error '+resp.status)
-      }
-
-      const data = await resp.json()
-      rawTxt   = data.text || ''
-      segments = data.segments || []
-
-      // Update usage
-      if (sess && data.usage) {
-        uData.usage_seconds = data.usage.used
-        renderUI()
-      } else if (sess && !useGuest) {
-        // Manually increment usage display
-        const dur = parseInt(data.duration||0)+1
-        if (uData) uData.usage_seconds = (uData.usage_seconds||0) + dur
-        renderUI()
-      }
-      if (!sess || useGuest) {
-        addG(parseInt(data.duration||0)+1)
-        renderUI()
-        if (gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM','limit'),1200)
-      }
-
-      pf.style.width='100%'; pm.textContent='Done! ✓'
-      if (chosenFmt==='hindi') {
-        displayTxt = rawTxt
-        setTimeout(()=>{ pw.classList.remove('show'); showOut(); resetBtn() },400)
-      } else {
-        setTimeout(async ()=>{ pw.classList.remove('show'); resetBtn(); await convertAndShow(chosenFmt) },400)
-      }
-
-    } catch(e) {
-      if (!isRetry) {
-        console.log('First attempt failed, retrying...', e)
-        pm.textContent='Retrying...'
-        await new Promise(r=>setTimeout(r,3000))
-        await attemptTranscribe(true)
-      } else {
-        pw.classList.remove('show'); resetBtn()
-        showErr(e.message.includes('fetch')||e.message.includes('Network')
-          ? 'Cannot connect. Try again in 30 seconds.'
-          : e.message)
-      }
-    }
-  }
+  const url     = sess ? BACKEND+'/transcribe' : BACKEND+'/transcribe-guest'
+  const headers = sess ? {Authorization:`Bearer ${sess.access_token}`} : {}
 
   try {
-    await attemptTranscribe(false)
+    const resp = await fetch(url, {method:'POST', headers, body:fd})
+    clearTimeout(t1); clearTimeout(t2)
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({}))
+      const det = err.detail||''
+      if (det.startsWith('LIMIT_EXCEEDED')) {
+        pw.classList.remove('show'); resetBtn()
+        openPricing('You have used all your free minutes. Upgrade to continue!')
+        return
+      }
+      if (resp.status===401) {
+        // Token expired - try guest
+        const gfd = new FormData()
+        gfd.append('file', selFile)
+        gfd.append('model', model)
+        const gr = await fetch(BACKEND+'/transcribe-guest', {method:'POST', body:gfd})
+        if (!gr.ok) throw new Error('Server error. Please try again.')
+        const gData = await gr.json()
+        rawTxt = gData.text||''; segments = gData.segments||[]
+        addGuestUsageDur(gData.duration)
+        pf.style.width='100%'; pm.textContent='Done! ✓'
+        setTimeout(async()=>{ pw.classList.remove('show'); resetBtn(); await finalize() },400)
+        return
+      }
+      throw new Error(det||'Server error '+resp.status)
+    }
+
+    const data = await resp.json()
+    rawTxt = data.text||''; segments = data.segments||[]
+
+    // Update usage bar
+    const dur = parseInt(data.duration||0)+1
+    if (sess && uData) {
+      uData.usage_seconds = data.usage ? data.usage.used : (uData.usage_seconds||0)+dur
+      renderUI()
+    } else {
+      addGuestUsageDur(data.duration)
+    }
+
+    pf.style.width='100%'; pm.textContent='Done! ✓'
+    setTimeout(async()=>{ pw.classList.remove('show'); resetBtn(); await finalize() },400)
+
   } catch(e) {
+    clearTimeout(t1); clearTimeout(t2)
     pw.classList.remove('show'); resetBtn()
-    showErr('Something went wrong. Please try again.')
+    showErr(e.message.includes('fetch')||e.message.includes('Network')
+      ? 'Server is starting up. Please wait 30 seconds and try again.'
+      : e.message)
+  }
+
+  function addGuestUsageDur(duration) {
+    addG(parseInt(duration||0)+1)
+    renderUI()
+    if (gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM','limit'),1200)
+  }
+
+  async function finalize() {
+    if (chosenFmt==='hindi') { displayTxt=rawTxt; showOut() }
+    else { await convertAndShow(chosenFmt) }
   }
 }
 
@@ -755,7 +730,7 @@ async function convertAndShow(fmt) {
 
 function showOut() {
   showTs = false
-  convertedSegments = []  // reset so they get re-converted for new transcript
+  convertedSegments = []
   document.getElementById('tsToggle').classList.remove('on')
   document.getElementById('ob').textContent = displayTxt
   const words = displayTxt.trim().split(/\s+/).length
@@ -776,38 +751,45 @@ function disableExports(off) {
 }
 
 // ── TIMESTAMPS ────────────────────────────────────────────
-let convertedSegments = []  // segments in chosen format
+let convertedSegments = []
 
 async function prepareSegments() {
-  // If Hindi, use raw segments directly
   if (chosenFmt === 'hindi' || !segments.length) {
-    convertedSegments = segments
+    convertedSegments = [...segments]
     return
   }
-  // For Hinglish/English, convert each segment text
+
+  // Convert ALL segment texts in ONE request for accuracy
   const conv = document.getElementById('converting')
   const msg  = document.getElementById('convertMsg')
   conv.classList.add('show')
-  msg.textContent = 'Preparing timestamps...'
+  msg.textContent = 'Converting timestamps...'
+
   try {
-    const allSegText = segments.map(s => s.text.trim()).join('\n')
+    // Join all segments with unique separator
+    const SEP = '|||'
+    const allText = segments.map(s => s.text.trim()).join(' ' + SEP + ' ')
+
     const fd = new FormData()
-    fd.append('text', allSegText)
+    fd.append('text', allText)
     fd.append('target', chosenFmt)
+
     const resp = await fetch(BACKEND+'/convert', {method:'POST', body:fd})
     if (resp.ok) {
       const data = await resp.json()
-      const convertedLines = data.text.split('\n').filter(l => l.trim())
+      // Split by separator
+      const parts = data.text.split(SEP).map(p => p.trim())
       convertedSegments = segments.map((s, i) => ({
         ...s,
-        text: convertedLines[i] || s.text
+        text: parts[i] || s.text
       }))
     } else {
-      convertedSegments = segments
+      convertedSegments = [...segments]
     }
   } catch(e) {
-    convertedSegments = segments
+    convertedSegments = [...segments]
   }
+
   conv.classList.remove('show')
 }
 
@@ -816,19 +798,28 @@ window.toggleTs = async () => {
   document.getElementById('tsToggle').classList.toggle('on', showTs)
   const ob = document.getElementById('ob')
 
-  if (!showTs || !segments.length) {
-    ob.textContent = displayTxt; return
+  if (!showTs) {
+    ob.textContent = displayTxt
+    return
   }
 
-  // Prepare converted segments if not done yet
+  if (!segments.length) {
+    toast('No timestamp data available')
+    showTs = false
+    document.getElementById('tsToggle').classList.remove('on')
+    return
+  }
+
+  // Convert segments if needed
   if (!convertedSegments.length) {
     await prepareSegments()
   }
 
+  // Render timestamps
   ob.innerHTML = convertedSegments.map(s => {
     const m   = Math.floor(s.start/60).toString().padStart(2,'0')
     const sec = Math.floor(s.start%60).toString().padStart(2,'0')
-    return '<span style="color:var(--accent);font-size:11px;font-weight:700;margin-right:8px;font-family:monospace">['+m+':'+sec+']</span>'+s.text.trim()+'<br><br>'
+    return '<div style="margin-bottom:12px"><span style="color:var(--accent);font-size:11px;font-weight:700;margin-right:8px;font-family:monospace;background:var(--accent-dim);padding:2px 7px;border-radius:4px">['+m+':'+sec+']</span>'+s.text.trim()+'</div>'
   }).join('')
 }
 
