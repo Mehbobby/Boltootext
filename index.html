@@ -633,70 +633,46 @@ window.doGo = async () => {
   fd.append('file', selFile)
   fd.append('model', model)
 
-  const url     = sess ? BACKEND+'/transcribe' : BACKEND+'/transcribe-guest'
-  const headers = sess ? {Authorization:`Bearer ${sess.access_token}`} : {}
+  // Always use guest endpoint (auth backend fix pending)
+  const url = BACKEND+'/transcribe-guest'
 
   try {
-    const resp = await fetch(url, {method:'POST', headers, body:fd})
+    const resp = await fetch(url, {method:'POST', body:fd})
     clearTimeout(t1); clearTimeout(t2)
 
     if (!resp.ok) {
       const err = await resp.json().catch(()=>({}))
-      const det = err.detail||''
-      if (det.startsWith('LIMIT_EXCEEDED')) {
-        pw.classList.remove('show'); resetBtn()
-        openPricing('You have used all your free minutes. Upgrade to continue!')
-        return
-      }
-      if (resp.status===401) {
-        // Token expired - try guest
-        const gfd = new FormData()
-        gfd.append('file', selFile)
-        gfd.append('model', model)
-        const gr = await fetch(BACKEND+'/transcribe-guest', {method:'POST', body:gfd})
-        if (!gr.ok) throw new Error('Server error. Please try again.')
-        const gData = await gr.json()
-        rawTxt = gData.text||''; segments = gData.segments||[]
-        addGuestUsageDur(gData.duration)
-        pf.style.width='100%'; pm.textContent='Done! ✓'
-        setTimeout(async()=>{ pw.classList.remove('show'); resetBtn(); await finalize() },400)
-        return
-      }
-      throw new Error(det||'Server error '+resp.status)
+      throw new Error(err.detail||'Server error. Please try again.')
     }
 
     const data = await resp.json()
-    rawTxt = data.text||''; segments = data.segments||[]
+    rawTxt   = data.text || ''
+    segments = data.segments || []
 
     // Update usage bar
-    const dur = parseInt(data.duration||0)+1
+    const dur = parseInt(data.duration||0) + 1
     if (sess && uData) {
-      uData.usage_seconds = data.usage ? data.usage.used : (uData.usage_seconds||0)+dur
+      uData.usage_seconds = (uData.usage_seconds||0) + dur
       renderUI()
     } else {
-      addGuestUsageDur(data.duration)
+      addG(dur)
+      renderUI()
+      if (gSec() >= GUEST_MAX) setTimeout(()=>openModal('loginM','limit'), 1200)
     }
 
     pf.style.width='100%'; pm.textContent='Done! ✓'
-    setTimeout(async()=>{ pw.classList.remove('show'); resetBtn(); await finalize() },400)
+    setTimeout(async()=>{
+      pw.classList.remove('show'); resetBtn()
+      if (chosenFmt==='hindi') { displayTxt=rawTxt; showOut() }
+      else { await convertAndShow(chosenFmt) }
+    }, 400)
 
   } catch(e) {
     clearTimeout(t1); clearTimeout(t2)
     pw.classList.remove('show'); resetBtn()
     showErr(e.message.includes('fetch')||e.message.includes('Network')
-      ? 'Server is starting up. Please wait 30 seconds and try again.'
-      : e.message)
-  }
-
-  function addGuestUsageDur(duration) {
-    addG(parseInt(duration||0)+1)
-    renderUI()
-    if (gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM','limit'),1200)
-  }
-
-  async function finalize() {
-    if (chosenFmt==='hindi') { displayTxt=rawTxt; showOut() }
-    else { await convertAndShow(chosenFmt) }
+      ? 'Server is waking up. Please wait 30 seconds and try again.'
+      : '⚠ ' + e.message)
   }
 }
 
