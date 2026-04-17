@@ -211,6 +211,43 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .t-dot{width:6px;height:6px;background:var(--success);border-radius:50%}
 
+/* INPUT TABS */
+.input-tabs { display:flex; gap:6px; margin-bottom:14px; }
+.itab {
+  flex:1; padding:9px; border-radius:8px;
+  border:1.5px solid var(--border); background:transparent;
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:13px;
+  font-weight:600; color:var(--text2); cursor:pointer; transition:all 0.15s;
+}
+.itab:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+.itab.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
+/* URL INPUT */
+.url-supported {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  font-size:12px; color:var(--text3); margin-bottom:12px;
+}
+.plat-badge {
+  background:rgba(255,255,255,0.05); border:1px solid var(--border);
+  border-radius:99px; padding:3px 10px; font-size:11px; font-weight:600; color:var(--text2);
+}
+.url-input-wrap {
+  display:flex; gap:8px; align-items:center;
+  background:var(--card2); border:1.5px solid var(--border);
+  border-radius:10px; padding:4px 8px 4px 14px;
+  transition:border-color 0.2s;
+}
+.url-input-wrap:focus-within { border-color:var(--accent); }
+.url-input-wrap input {
+  flex:1; background:transparent; border:none; outline:none;
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:13px;
+  color:var(--text); padding:8px 0;
+}
+.url-input-wrap input::placeholder { color:var(--text3); }
+.url-note {
+  font-size:11px; color:var(--text3); margin-top:8px; line-height:1.6;
+}
+
 /* RESPONSIVE */
 @media(max-width:580px){
   .main{padding:20px 14px 60px}
@@ -280,23 +317,49 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
   </div>
 
-  <!-- STEP 2: UPLOAD -->
+  <!-- STEP 2: UPLOAD / URL -->
   <div class="card">
-    <div class="card-lbl">Step 2 — Upload File</div>
-    <div class="drop-zone" id="dz">
-      <input type="file" id="fi" accept="video/*,audio/*,.mp3,.mp4,.wav,.m4a,.webm,.ogg,.flac" onchange="pickFile(this.files[0])"/>
-      <span class="dz-icon">🎬</span>
-      <div class="dz-title">Click to upload or drag & drop</div>
-      <div class="dz-sub">MP4 · MOV · MP3 · WAV · M4A · WEBM<br><b>Max 25MB</b></div>
+    <div class="card-lbl">Step 2 — Add Video</div>
+
+    <!-- Tabs -->
+    <div class="input-tabs">
+      <button class="itab active" id="tab-file" onclick="switchTab('file')">📁 Upload File</button>
+      <button class="itab" id="tab-url" onclick="switchTab('url')">🔗 Paste Link</button>
     </div>
-    <div class="file-row" id="fRow">
-      <div class="f-icon">📁</div>
-      <div class="f-meta">
-        <div class="f-name" id="fName">—</div>
-        <div class="f-size" id="fSize">—</div>
+
+    <!-- FILE TAB -->
+    <div id="pane-file">
+      <div class="drop-zone" id="dz">
+        <input type="file" id="fi" accept="video/*,audio/*,.mp3,.mp4,.wav,.m4a,.webm,.ogg,.flac" onchange="pickFile(this.files[0])"/>
+        <span class="dz-icon">🎬</span>
+        <div class="dz-title">Click to upload or drag & drop</div>
+        <div class="dz-sub">MP4 · MOV · MP3 · WAV · M4A · WEBM<br><b>Max 25MB</b></div>
       </div>
-      <button class="btn btn-out btn-sm" onclick="rmFile()">✕ Remove</button>
+      <div class="file-row" id="fRow">
+        <div class="f-icon">📁</div>
+        <div class="f-meta">
+          <div class="f-name" id="fName">—</div>
+          <div class="f-size" id="fSize">—</div>
+        </div>
+        <button class="btn btn-out btn-sm" onclick="rmFile()">✕ Remove</button>
+      </div>
     </div>
+
+    <!-- URL TAB -->
+    <div id="pane-url" style="display:none">
+      <div class="url-supported">
+        <span>Supported platforms:</span>
+        <span class="plat-badge">▶ YouTube</span>
+        <span class="plat-badge">📸 Instagram</span>
+        <span class="plat-badge">👤 Facebook</span>
+      </div>
+      <div class="url-input-wrap">
+        <input type="url" id="urlInput" placeholder="Paste YouTube / Instagram / Facebook link here..." oninput="onUrlInput()"/>
+        <button class="btn btn-out btn-sm" onclick="clearUrl()" id="urlClear" style="display:none">✕</button>
+      </div>
+      <div class="url-note">ℹ️ Public videos only. Private or age-restricted videos won't work.</div>
+    </div>
+
     <button id="goBtn" onclick="doGo()" disabled>▶ &nbsp;Transcribe Now</button>
     <div class="prog-wrap" id="pw">
       <div class="prog-bg"><div class="prog-fill" id="pf"></div></div>
@@ -583,6 +646,43 @@ window.chooseQuality = q => {
   document.getElementById('q-'+q).classList.add('sel')
 }
 
+// ── TABS ─────────────────────────────────────────────────
+let activeTab = 'file'
+
+window.switchTab = (tab) => {
+  activeTab = tab
+  document.querySelectorAll('.itab').forEach(t => t.classList.remove('active'))
+  document.getElementById('tab-'+tab).classList.add('active')
+  document.getElementById('pane-file').style.display = tab==='file' ? 'block' : 'none'
+  document.getElementById('pane-url').style.display  = tab==='url'  ? 'block' : 'none'
+  // Reset
+  if (tab==='file') { clearUrl(); checkReady() }
+  if (tab==='url')  { rmFile();   checkReady() }
+}
+
+// ── URL ───────────────────────────────────────────────────
+window.onUrlInput = () => {
+  const val = document.getElementById('urlInput').value.trim()
+  document.getElementById('urlClear').style.display = val ? 'block' : 'none'
+  checkReady()
+}
+
+window.clearUrl = () => {
+  document.getElementById('urlInput').value = ''
+  document.getElementById('urlClear').style.display = 'none'
+  checkReady()
+}
+
+function checkReady() {
+  const btn = document.getElementById('goBtn')
+  if (activeTab === 'file') {
+    btn.disabled = !selFile
+  } else {
+    const url = document.getElementById('urlInput')?.value.trim() || ''
+    btn.disabled = url.length < 10
+  }
+}
+
 // ── FILE ──────────────────────────────────────────────────
 const dz = document.getElementById('dz')
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag') })
@@ -596,18 +696,20 @@ window.pickFile = f => {
   document.getElementById('fSize').textContent = (f.size/1024/1024).toFixed(2)+' MB'
   document.getElementById('fRow').classList.add('show')
   document.getElementById('eb').classList.remove('show')
-  document.getElementById('goBtn').disabled = false
+  checkReady()
 }
 
 window.rmFile = () => {
   selFile = null
-  document.getElementById('fi').value = ''
+  const fi = document.getElementById('fi')
+  if (fi) fi.value = ''
   document.getElementById('fRow').classList.remove('show')
-  document.getElementById('goBtn').disabled = true
+  checkReady()
 }
 
 // ── TRANSCRIBE ────────────────────────────────────────────
 window.doGo = async () => {
+  if (activeTab === 'url') { await doGoUrl(); return }
   if (!selFile) return
   if (!sess && gSec() >= GUEST_MAX) { openModal('loginM', 'limit'); return }
   if (sess && uData) {
@@ -868,6 +970,51 @@ window.dlDOCX = async () => {
 }
 
 // ── UTILS ─────────────────────────────────────────────────
+async function doGoUrl() {
+  const videoUrl = document.getElementById('urlInput').value.trim()
+  if (!videoUrl) return
+  if (!sess && gSec() >= GUEST_MAX) { openModal('loginM'); return }
+  if (sess && uData) {
+    const lim = PLAN_LIM[uData.plan]||PLAN_LIM.free
+    if (uData.usage_seconds >= lim) { openPricing('You have used all your free minutes. Upgrade to continue!'); return }
+  }
+  const btn=document.getElementById('goBtn'), pw=document.getElementById('pw')
+  const pf=document.getElementById('pf'), pm=document.getElementById('pm')
+  btn.disabled=true; btn.textContent='⏳ Processing...'
+  pw.classList.add('show'); document.getElementById('eb').classList.remove('show')
+  document.getElementById('outCard').classList.remove('show')
+  disableExports(true)
+  pf.style.width='10%'; pm.textContent='Downloading video...'
+  const t1=setTimeout(()=>{pf.style.width='40%';pm.textContent='Extracting audio...'},5000)
+  const t2=setTimeout(()=>{pf.style.width='65%';pm.textContent='AI is transcribing...'},15000)
+  const t3=setTimeout(()=>{pf.style.width='85%';pm.textContent='Almost done...'},30000)
+  const fd=new FormData()
+  fd.append('url', videoUrl)
+  fd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
+  const headers = sess ? {Authorization:`Bearer ${sess.access_token}`} : {}
+  try {
+    const resp = await fetch(BACKEND+'/transcribe-url',{method:'POST',headers,body:fd})
+    clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
+    if (!resp.ok) {
+      const err=await resp.json().catch(()=>({}))
+      const det=err.detail||''
+      if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes.'); return }
+      throw new Error(det||'Server error '+resp.status)
+    }
+    const data=await resp.json()
+    rawTxt=data.text||''; segments=data.segments||[]
+    if (sess && data.usage) { uData.usage_seconds=data.usage.used; renderUI() }
+    if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM'),1200) }
+    pf.style.width='100%'; pm.textContent='Done! ✓'
+    if (chosenFmt==='hindi') { displayTxt=rawTxt; setTimeout(()=>{ pw.classList.remove('show'); showOut(); resetBtn() },400) }
+    else { setTimeout(async()=>{ pw.classList.remove('show'); resetBtn(); await convertAndShow(chosenFmt) },400) }
+  } catch(e) {
+    clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
+    pw.classList.remove('show'); resetBtn()
+    showErr(e.message.includes('fetch')||e.message.includes('Network') ? 'Cannot connect to server. Wait 30 sec and try again.' : e.message)
+  }
+}
+
 function resetBtn() {
   const btn=document.getElementById('goBtn')
   btn.textContent='▶ Transcribe Now'; btn.disabled=!selFile
