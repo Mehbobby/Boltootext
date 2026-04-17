@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Header
+import tempfile, os, subprocess, re
 from fastapi.middleware.cors import CORSMiddleware
 import httpx, os, hmac, hashlib
 from supabase import create_client
@@ -243,6 +244,101 @@ async def transcribe_guest(
         return data
     except httpx.TimeoutException:
         raise HTTPException(504, "Timeout! Try again.")
+
+
+@app.post("/transcribe-url")
+async def transcribe_url(
+    url: str = Form(...),
+    model: str = Form("whisper-large-v3-turbo"),
+    language: str = Form(""),
+    authorization: str = Header(None),
+):
+    """Transcribe from YouTube/Instagram/Facebook URL"""
+
+    # Validate URL
+    allowed = ['youtube.com', 'youtu.be', 'instagram.com', 'facebook.com', 'fb.watch', 'fb.com']
+    if not any(d in url for d in allowed):
+        raise HTTPException(400, "Only YouTube, Instagram, and Facebook links are supported.")
+
+    # Check auth & usage
+    if authorization and authorization.startswith("Bearer "):
+        try:
+            user = get_user(authorization.split(" ")[1])
+            uid  = str(user.id)
+            plan = get_plan(uid)
+            used = get_usage(uid)
+            limit = PLAN_LIM_SEC.get(plan, 600)
+            if used >= limit:
+                raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
+            is_logged_in = True
+        except HTTPException:
+            raise
+        except:
+            is_logged_in = False
+            uid = None
+    else:
+        is_logged_in = False
+        uid = None
+
+    # Download audio using yt-dlp
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_path = os.path.join(tmpdir, 'audio.%(ext)s')
+        cmd = [
+            'yt-dlp',
+            '--extract-audio',
+            '--audio-format', 'mp3',
+            '--audio-quality', '5',
+            '--max-filesize', '25m',
+            '--output', out_path,
+            '--no-playlist',
+            '--quiet',
+            url
+        ]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            if result.returncode != 0:
+                err = result.stderr.lower()
+                if 'private' in err or 'login' in err:
+                    raise HTTPException(400, "This video is private or requires login.")
+                if 'not available' in err or 'unavailable' in err:
+                    raise HTTPException(400, "Video not available. Check the link.")
+                raise HTTPException(400, "Could not download video. Try a different link.")
+        except subprocess.TimeoutExpired:
+            raise HTTPException(504, "Download timed out. Try a shorter video.")
+
+        # Find downloaded file
+        audio_file = None
+        for f in os.listdir(tmpdir):
+            if f.startswith('audio.'):
+                audio_file = os.path.join(tmpdir, f)
+                break
+
+        if not audio_file:
+            raise HTTPException(500, "Audio extraction failed.")
+
+        # Check file size
+        fsize = os.path.getsize(audio_file)
+        if fsize > 25 * 1024 * 1024:
+            raise HTTPException(413, "Audio too large (max 25MB). Try a shorter video.")
+
+        with open(audio_file, 'rb') as f:
+            fb = f.read()
+
+        # Transcribe
+        data = await call_groq_whisper(fb, 'audio.mp3', 'audio/mpeg', model, language)
+        dur = int(data.get("duration", 0)) + 1
+
+        if is_logged_in and uid:
+            add_usage(uid, dur)
+            plan = get_plan(uid)
+            used = get_usage(uid)
+            limit = PLAN_LIM_SEC.get(plan, 600)
+            return {**data, "usage": {"used": used, "limit": limit, "plan": plan, "remaining": max(0, limit-used)}}
+
+        return data
+
+
+PLAN_LIM_SEC = {"free": 600, "starter": 7200, "pro": 30000}
 
 
 @app.post("/convert")
