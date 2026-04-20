@@ -764,8 +764,15 @@ window.doGo = async () => {
     // Update usage bar
     const dur = parseInt(data.duration||0) + 1
     if (sess && uData) {
-      uData.usage_seconds = (uData.usage_seconds||0) + dur
+      if (data.usage) {
+        uData.usage_seconds = data.usage.used
+        uData.limit_seconds = data.usage.limit
+      } else {
+        uData.usage_seconds = (uData.usage_seconds||0) + dur
+      }
       renderUI()
+      // Also reload from server to confirm accurate usage
+      setTimeout(async () => { await loadUser(); renderUI() }, 2000)
     } else {
       addG(dur)
       renderUI()
@@ -1027,7 +1034,14 @@ async function doGoUrl() {
     }
     const data=await resp.json()
     rawTxt=data.text||''; segments=data.segments||[]
-    if (sess && data.usage) { uData.usage_seconds=data.usage.used; renderUI() }
+    if (sess && data.usage) {
+      uData.usage_seconds=data.usage.used
+      uData.limit_seconds=data.usage.limit
+      renderUI()
+    } else if (sess) {
+      // Usage not in response — reload from server
+      await loadUser()
+    }
     if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM'),1200) }
     pf.style.width='100%'; pm.textContent='Done! ✓'
     if (chosenFmt==='hindi') { displayTxt=rawTxt; setTimeout(()=>{ pw.classList.remove('show'); showOut(); resetBtn() },400) }
