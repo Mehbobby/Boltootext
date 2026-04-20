@@ -31,44 +31,49 @@ def get_user(token):
 
 def get_plan(uid):
     try:
-        r = sb().table("subscriptions").select("plan,valid_until").eq("user_id", uid).single().execute()
-        if r.data:
-            v = r.data.get("valid_until")
+        r = sb().table("subscriptions").select("plan,valid_until").eq("user_id", uid).execute()
+        if r.data and len(r.data) > 0:
+            v = r.data[0].get("valid_until")
             if v and datetime.fromisoformat(v.replace("Z","+00:00")) < datetime.now(timezone.utc):
                 return "free"
-            return r.data["plan"]
-    except:
-        pass
+            return r.data[0]["plan"]
+    except Exception as e:
+        print(f"get_plan error: {e}")
     return "free"
 
 def get_usage(uid):
+    """Get usage in seconds for current month"""
     try:
-        r = sb().table("usage").select("seconds_used").eq("user_id", uid).eq("month_year", cur_month()).single().execute()
-        return r.data["seconds_used"] if r.data else 0
-    except:
+        r = sb().table("usage")             .select("seconds_used")             .eq("user_id", uid)             .eq("month_year", cur_month())             .execute()
+        if r.data and len(r.data) > 0:
+            return int(r.data[0]["seconds_used"])
+        return 0
+    except Exception as e:
+        print(f"get_usage error: {e}")
         return 0
 
 def add_usage(uid, secs):
+    """Add usage seconds — reliable upsert approach"""
     m = cur_month()
-    client = sb()
     try:
-        # Use upsert to avoid race conditions
-        existing = client.table("usage").select("id,seconds_used").eq("user_id", uid).eq("month_year", m).execute()
-        if existing.data and len(existing.data) > 0:
-            row = existing.data[0]
-            client.table("usage").update({
-                "seconds_used": row["seconds_used"] + secs,
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }).eq("id", row["id"]).execute()
+        client = sb()
+        # Step 1: get current usage
+        r = client.table("usage")             .select("id,seconds_used")             .eq("user_id", uid)             .eq("month_year", m)             .execute()
+
+        if r.data and len(r.data) > 0:
+            # Row exists — update it
+            row_id = r.data[0]["id"]
+            current = int(r.data[0]["seconds_used"])
+            new_total = current + secs
+            result = client.table("usage")                 .update({"seconds_used": new_total})                 .eq("id", row_id)                 .execute()
+            print(f"[usage] Updated uid={uid} month={m} {current}+{secs}={new_total}s")
         else:
-            client.table("usage").insert({
-                "user_id": uid,
-                "seconds_used": secs,
-                "month_year": m,
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }).execute()
+            # No row — insert new
+            result = client.table("usage")                 .insert({"user_id": uid, "seconds_used": secs, "month_year": m})                 .execute()
+            print(f"[usage] Inserted uid={uid} month={m} secs={secs}")
+
     except Exception as e:
-        print(f"Usage save error: {e}")
+        print(f"[usage] ERROR uid={uid}: {e}")
 
 
 def verify_razorpay_signature(order_id, payment_id, signature):
@@ -356,6 +361,31 @@ async def transcribe_url(
 
 PLAN_LIM_SEC = {"free": 600, "starter": 7200, "pro": 30000}
 
+
+
+
+@app.get("/debug-usage")
+async def debug_usage(authorization: str = Header(None)):
+    """Debug endpoint to check usage directly from DB"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Token required")
+    user = get_user(authorization.split(" ")[1])
+    uid = str(user.id)
+    m = cur_month()
+    try:
+        r = sb().table("usage").select("*").eq("user_id", uid).execute()
+        plan = get_plan(uid)
+        used = get_usage(uid)
+        return {
+            "uid": uid,
+            "month": m,
+            "plan": plan,
+            "usage_seconds": used,
+            "usage_minutes": round(used/60, 2),
+            "all_rows": r.data
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/convert")
 async def convert_text(
