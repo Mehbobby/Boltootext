@@ -1065,6 +1065,22 @@ window.doPay = async () => {
 // Init exports as disabled
 disableExports(true)
 init()
+
+// Refresh usage when user comes back to tab
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden && sess) {
+    await loadUser()
+    renderUI()
+  }
+})
+
+// Also refresh when window gets focus
+window.addEventListener('focus', async () => {
+  if (sess) {
+    await loadUser()
+    renderUI()
+  }
+})
 </script>
 </body>
 </html>
