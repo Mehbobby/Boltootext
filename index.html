@@ -452,7 +452,13 @@ const RZ_KEY        = 'rzp_test_SZqFaH7NOAMrJX'
 const GUEST_MAX     = 4 * 60
 const PLAN_LIM      = { free:600, starter:7200, pro:30000 }
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storage: window.localStorage
+  }
+})
 let sess=null, uData=null, selFile=null, rawTxt='', displayTxt='', segments=[], sPlan='starter'
 let chosenFmt='hinglish', chosenQuality='fast', showTs=false
 
@@ -711,6 +717,10 @@ window.rmFile = () => {
 window.doGo = async () => {
   if (activeTab === 'url') { await doGoUrl(); return }
   if (!selFile) return
+  // Refresh session before request
+  const { data: sd } = await sb.auth.getSession()
+  sess = sd?.session || null
+
   if (!sess && gSec() >= GUEST_MAX) { openModal('loginM', 'limit'); return }
   if (sess && uData) {
     const lim = PLAN_LIM[uData.plan]||PLAN_LIM.free
@@ -973,11 +983,17 @@ window.dlDOCX = async () => {
 async function doGoUrl() {
   const videoUrl = document.getElementById('urlInput').value.trim()
   if (!videoUrl) return
+
+  // Refresh session before making request
+  const { data: sessionData } = await sb.auth.getSession()
+  sess = sessionData?.session || null
+
   if (!sess && gSec() >= GUEST_MAX) { openModal('loginM'); return }
   if (sess && uData) {
     const lim = PLAN_LIM[uData.plan]||PLAN_LIM.free
     if (uData.usage_seconds >= lim) { openPricing('You have used all your free minutes. Upgrade to continue!'); return }
   }
+
   const btn=document.getElementById('goBtn'), pw=document.getElementById('pw')
   const pf=document.getElementById('pf'), pm=document.getElementById('pm')
   btn.disabled=true; btn.textContent='⏳ Processing...'
@@ -988,12 +1004,20 @@ async function doGoUrl() {
   const t1=setTimeout(()=>{pf.style.width='40%';pm.textContent='Extracting audio...'},5000)
   const t2=setTimeout(()=>{pf.style.width='65%';pm.textContent='AI is transcribing...'},15000)
   const t3=setTimeout(()=>{pf.style.width='85%';pm.textContent='Almost done...'},30000)
+
   const fd=new FormData()
   fd.append('url', videoUrl)
   fd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
-  const headers = sess ? {Authorization:`Bearer ${sess.access_token}`} : {}
+
+  // Always include auth token if session exists
+  const headers = {}
+  if (sess && sess.access_token) {
+    headers['Authorization'] = `Bearer ${sess.access_token}`
+  }
+
   try {
-    const resp = await fetch(BACKEND+'/transcribe-url',{method:'POST',headers,body:fd})
+    const endpoint = sess ? BACKEND+'/transcribe-url' : BACKEND+'/transcribe-url'
+    const resp = await fetch(endpoint, {method:'POST', headers, body:fd})
     clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
     if (!resp.ok) {
       const err=await resp.json().catch(()=>({}))
@@ -1066,21 +1090,8 @@ window.doPay = async () => {
 disableExports(true)
 init()
 
-// Refresh usage when user comes back to tab
-document.addEventListener('visibilitychange', async () => {
-  if (!document.hidden && sess) {
-    await loadUser()
-    renderUI()
-  }
-})
-
-// Also refresh when window gets focus
-window.addEventListener('focus', async () => {
-  if (sess) {
-    await loadUser()
-    renderUI()
-  }
-})
+// Refresh usage only when page is fully reloaded
+// (not on tab switch - that was causing reset)
 </script>
 </body>
 </html>
