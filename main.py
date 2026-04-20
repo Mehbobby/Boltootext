@@ -267,7 +267,9 @@ async def transcribe_url(
     if not any(d in url for d in allowed):
         raise HTTPException(400, "Only YouTube, Instagram, and Facebook links are supported.")
 
-    # Check auth & usage
+    # Check auth & usage - invalid token = treat as guest (no hard error)
+    is_logged_in = False
+    uid = None
     if authorization and authorization.startswith("Bearer "):
         try:
             user = get_user(authorization.split(" ")[1])
@@ -278,14 +280,15 @@ async def transcribe_url(
             if used >= limit:
                 raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
             is_logged_in = True
-        except HTTPException:
-            raise
+        except HTTPException as he:
+            if he.status_code == 429:
+                raise  # limit exceeded - re-raise
+            # 401 invalid token - fall back to guest silently
+            is_logged_in = False
+            uid = None
         except:
             is_logged_in = False
             uid = None
-    else:
-        is_logged_in = False
-        uid = None
 
     # Download audio using yt-dlp
     with tempfile.TemporaryDirectory() as tmpdir:
