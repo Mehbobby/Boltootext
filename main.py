@@ -267,28 +267,34 @@ async def transcribe_url(
     if not any(d in url for d in allowed):
         raise HTTPException(400, "Only YouTube, Instagram, and Facebook links are supported.")
 
-    # Check auth & usage - invalid token = treat as guest (no hard error)
+    # Check auth & usage
     is_logged_in = False
     uid = None
+    plan = "free"
     if authorization and authorization.startswith("Bearer "):
-        try:
-            user = get_user(authorization.split(" ")[1])
-            uid  = str(user.id)
-            plan = get_plan(uid)
-            used = get_usage(uid)
-            limit = PLAN_LIM_SEC.get(plan, 600)
-            if used >= limit:
-                raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
-            is_logged_in = True
-        except HTTPException as he:
-            if he.status_code == 429:
-                raise  # limit exceeded - re-raise
-            # 401 invalid token - fall back to guest silently
-            is_logged_in = False
-            uid = None
-        except:
-            is_logged_in = False
-            uid = None
+        token = authorization.split(" ")[1]
+        # Try to get user - retry once if first attempt fails
+        for attempt in range(2):
+            try:
+                user = sb().auth.get_user(token).user
+                if user and user.id:
+                    uid  = str(user.id)
+                    plan = get_plan(uid)
+                    used = get_usage(uid)
+                    limit = PLAN_LIM_SEC.get(plan, 600)
+                    if used >= limit:
+                        raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
+                    is_logged_in = True
+                    break
+            except HTTPException as he:
+                if he.status_code == 429:
+                    raise
+                break
+            except Exception as e:
+                print(f"Auth attempt {attempt+1} failed: {e}")
+                if attempt == 0:
+                    import asyncio
+                    await asyncio.sleep(0.5)
 
     # Download audio using yt-dlp
     with tempfile.TemporaryDirectory() as tmpdir:
