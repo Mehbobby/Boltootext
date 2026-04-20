@@ -50,19 +50,26 @@ def get_usage(uid):
 
 def add_usage(uid, secs):
     m = cur_month()
+    client = sb()
     try:
-        ex = sb().table("usage").select("id,seconds_used").eq("user_id", uid).eq("month_year", m).single().execute()
-        if ex.data:
-            sb().table("usage").update({
-                "seconds_used": ex.data["seconds_used"] + secs,
-                "updated_at": datetime.now().isoformat()
-            }).eq("id", ex.data["id"]).execute()
+        # Use upsert to avoid race conditions
+        existing = client.table("usage").select("id,seconds_used").eq("user_id", uid).eq("month_year", m).execute()
+        if existing.data and len(existing.data) > 0:
+            row = existing.data[0]
+            client.table("usage").update({
+                "seconds_used": row["seconds_used"] + secs,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }).eq("id", row["id"]).execute()
         else:
-            sb().table("usage").insert({
-                "user_id": uid, "seconds_used": secs, "month_year": m
+            client.table("usage").insert({
+                "user_id": uid,
+                "seconds_used": secs,
+                "month_year": m,
+                "updated_at": datetime.now(timezone.utc).isoformat()
             }).execute()
     except Exception as e:
-        print(f"Usage err: {e}")
+        print(f"Usage save error: {e}")
+
 
 def verify_razorpay_signature(order_id, payment_id, signature):
     msg = f"{order_id}|{payment_id}"
