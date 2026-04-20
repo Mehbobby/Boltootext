@@ -113,8 +113,8 @@ async def transcribe(
         raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
 
     fb = await file.read()
-    if len(fb) > 25 * 1024 * 1024:
-        raise HTTPException(413, "25MB se badi file nahi chalegi!")
+    if len(fb) > 50 * 1024 * 1024:
+        raise HTTPException(413, "50MB se badi file nahi chalegi!")
 
     try:
         data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
@@ -237,8 +237,8 @@ async def transcribe_guest(
 ):
     """No auth needed — guest gets 4 min, tracked client-side"""
     fb = await file.read()
-    if len(fb) > 25*1024*1024:
-        raise HTTPException(413, "25MB se badi file nahi chalegi!")
+    if len(fb) > 50*1024*1024:
+        raise HTTPException(413, "50MB se badi file nahi chalegi!")
     try:
         data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
         return data
@@ -288,7 +288,7 @@ async def transcribe_url(
             '--extract-audio',
             '--audio-format', 'mp3',
             '--audio-quality', '5',
-            '--max-filesize', '25m',
+            '--max-filesize', '50m',
             '--output', out_path,
             '--no-playlist',
             '--quiet',
@@ -318,8 +318,8 @@ async def transcribe_url(
 
         # Check file size
         fsize = os.path.getsize(audio_file)
-        if fsize > 25 * 1024 * 1024:
-            raise HTTPException(413, "Audio too large (max 25MB). Try a shorter video.")
+        if fsize > 50 * 1024 * 1024:
+            raise HTTPException(413, "Audio too large (max 50MB). Try a shorter video.")
 
         with open(audio_file, 'rb') as f:
             fb = f.read()
