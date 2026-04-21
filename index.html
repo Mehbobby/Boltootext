@@ -558,7 +558,10 @@ function renderUI() {
   if (sess && uData) {
     gb.classList.remove('show')
     uw.classList.add('show')
-    const plan=uData.plan||'free', used=uData.usage_seconds||0
+    const plan=uData.plan||'free'
+    // Backend returns minutes, convert to seconds for display (PLAN_LIM is in seconds)
+    const usedMin=uData.used_minutes||uData.usage_seconds||0
+    const used=usedMin>100?usedMin:(usedMin*60) // if >100 assume already seconds
     const lim=PLAN_LIM[plan]||PLAN_LIM.free
     const uMin=Math.round(used/60), lMin=Math.round(lim/60)
     const pct=Math.min(100,(used/lim)*100), rem=Math.max(0,lMin-uMin)
@@ -765,8 +768,9 @@ window.doGo = async () => {
     const dur = parseInt(data.duration||0) + 1
     if (sess && uData) {
       if (data.usage) {
-        uData.usage_seconds = data.usage.used
-        uData.limit_seconds = data.usage.limit
+        // Backend returns minutes, convert to seconds for display
+        uData.usage_seconds = (data.usage.used_minutes || data.usage.used || 0) * 60
+        uData.limit_seconds = (data.usage.limit_minutes || data.usage.limit || PLAN_LIM[uData.plan]/60) * 60
       } else {
         uData.usage_seconds = (uData.usage_seconds||0) + dur
       }
@@ -1028,7 +1032,7 @@ async function doGoUrl() {
     clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
     if (!resp.ok) {
       const err=await resp.json().catch(()=>({}))
-      const det=err.detail||''
+      const det=typeof err.detail==='string'?err.detail:(err.detail||'')
       if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes.'); return }
       throw new Error(det||'Server error '+resp.status)
     }
