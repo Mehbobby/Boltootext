@@ -341,6 +341,7 @@ async def transcribe(
     return {
         "text": result["text"],
         "segments": result["segments"],
+        "duration": int(result["duration"]),
         "duration_minutes": round(duration_minutes, 2),
         "usage": {
             "used_minutes": round(new_used, 2),
@@ -518,3 +519,56 @@ async def verify_payment(request: dict, authorization: Optional[str] = Header(No
             )
     
     return {"success": True, "plan": plan}
+
+# ── GUEST TRANSCRIBE ENDPOINT ──────────────────────────────
+@app.post("/transcribe-guest")
+async def transcribe_guest(
+    file: UploadFile = File(...),
+    language: str = "auto",
+    authorization: Optional[str] = Header(None)
+):
+    """Guest transcription - same as /transcribe but always allows guest usage"""
+    # Check if user is logged in
+    user_id = None
+    plan = "guest"
+    used = 0.0
+    limit = 4.0  # Guest limit in minutes
+
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        user = await get_user_from_token(token)
+        if user:
+            user_id = user["id"]
+            plan = await get_subscription(user_id)
+            used = await get_usage(user_id)
+            limit = PLAN_LIMITS.get(plan, 10)
+
+    if used >= limit:
+        if user_id is None:
+            raise HTTPException(status_code=403, detail="GUEST_LIMIT_REACHED")
+        else:
+            raise HTTPException(status_code=403, detail="LIMIT_EXCEEDED")
+
+    audio_bytes = await file.read()
+    if len(audio_bytes) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Max 50MB.")
+
+    result = await transcribe_with_groq(audio_bytes, file.filename or "audio.mp3", language)
+    duration_minutes = result["duration"] / 60.0
+
+    new_used = used
+    if user_id:
+        new_used = await add_usage(user_id, duration_minutes)
+        print(f"Guest-auth usage updated for {user_id}: +{duration_minutes:.2f} min, total: {new_used:.2f}")
+
+    return {
+        "text": result["text"],
+        "segments": result["segments"],
+        "duration": int(result["duration"]),
+        "duration_minutes": round(duration_minutes, 2),
+        "usage": {
+            "used_minutes": round(new_used, 2),
+            "limit_minutes": limit,
+            "plan": plan
+        }
+    }
