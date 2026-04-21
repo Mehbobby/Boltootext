@@ -1016,35 +1016,32 @@ async function doGoUrl() {
   const t2=setTimeout(()=>{pf.style.width='65%';pm.textContent='AI is transcribing...'},15000)
   const t3=setTimeout(()=>{pf.style.width='85%';pm.textContent='Almost done...'},30000)
 
-  const fd=new FormData()
-  fd.append('url', videoUrl)
-  fd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
-
-  // Always include auth token if session exists
-  const headers = {}
+  const headers = {'Content-Type': 'application/json'}
   if (sess && sess.access_token) {
     headers['Authorization'] = `Bearer ${sess.access_token}`
   }
 
   try {
-    const endpoint = sess ? BACKEND+'/transcribe-url' : BACKEND+'/transcribe-url'
-    const resp = await fetch(endpoint, {method:'POST', headers, body:fd})
+    const body = JSON.stringify({
+      url: videoUrl,
+      language: chosenFmt==='hindi' ? 'hi' : (chosenFmt==='english' ? 'en' : 'auto')
+    })
+    const resp = await fetch(BACKEND+'/transcribe-url', {method:'POST', headers, body})
     clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
     if (!resp.ok) {
       const err=await resp.json().catch(()=>({}))
-      const det=typeof err.detail==='string'?err.detail:(err.detail||'')
+      const det=String(err.detail||'')
       if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes.'); return }
       throw new Error(det||'Server error '+resp.status)
     }
     const data=await resp.json()
     rawTxt=data.text||''; segments=data.segments||[]
-    if (sess && data.usage) {
-      uData.usage_seconds=data.usage.used
-      uData.limit_seconds=data.usage.limit
+    if (sess && uData && data.usage) {
+      uData.usage_seconds = (data.usage.used_minutes || data.usage.used || 0) * 60
+      uData.limit_seconds = (data.usage.limit_minutes || data.usage.limit || 10) * 60
       renderUI()
     } else if (sess) {
-      // Usage not in response — reload from server
-      await loadUser()
+      await loadUser(); renderUI()
     }
     if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM'),1200) }
     pf.style.width='100%'; pm.textContent='Done! ✓'
