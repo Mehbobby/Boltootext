@@ -31,38 +31,50 @@ def get_user(token):
 
 def get_plan(uid):
     try:
-        r = sb().table("subscriptions").select("plan,valid_until").eq("user_id", uid).single().execute()
-        if r.data:
-            v = r.data.get("valid_until")
+        r = sb().table("subscriptions").select("plan,valid_until").eq("user_id", uid).execute()
+        if r.data and len(r.data) > 0:
+            v = r.data[0].get("valid_until")
             if v and datetime.fromisoformat(v.replace("Z","+00:00")) < datetime.now(timezone.utc):
                 return "free"
-            return r.data["plan"]
-    except:
-        pass
+            return r.data[0]["plan"]
+    except Exception as e:
+        print(f"get_plan error: {e}")
     return "free"
 
 def get_usage(uid):
+    """Get usage in seconds for current month"""
     try:
-        r = sb().table("usage").select("seconds_used").eq("user_id", uid).eq("month_year", cur_month()).single().execute()
-        return r.data["seconds_used"] if r.data else 0
-    except:
+        r = sb().table("usage")             .select("seconds_used")             .eq("user_id", uid)             .eq("month_year", cur_month())             .execute()
+        if r.data and len(r.data) > 0:
+            return int(r.data[0]["seconds_used"])
+        return 0
+    except Exception as e:
+        print(f"get_usage error: {e}")
         return 0
 
 def add_usage(uid, secs):
+    """Add usage seconds — reliable upsert approach"""
     m = cur_month()
     try:
-        ex = sb().table("usage").select("id,seconds_used").eq("user_id", uid).eq("month_year", m).single().execute()
-        if ex.data:
-            sb().table("usage").update({
-                "seconds_used": ex.data["seconds_used"] + secs,
-                "updated_at": datetime.now().isoformat()
-            }).eq("id", ex.data["id"]).execute()
+        client = sb()
+        # Step 1: get current usage
+        r = client.table("usage")             .select("id,seconds_used")             .eq("user_id", uid)             .eq("month_year", m)             .execute()
+
+        if r.data and len(r.data) > 0:
+            # Row exists — update it
+            row_id = r.data[0]["id"]
+            current = int(r.data[0]["seconds_used"])
+            new_total = current + secs
+            result = client.table("usage")                 .update({"seconds_used": new_total})                 .eq("id", row_id)                 .execute()
+            print(f"[usage] Updated uid={uid} month={m} {current}+{secs}={new_total}s")
         else:
-            sb().table("usage").insert({
-                "user_id": uid, "seconds_used": secs, "month_year": m
-            }).execute()
+            # No row — insert new
+            result = client.table("usage")                 .insert({"user_id": uid, "seconds_used": secs, "month_year": m})                 .execute()
+            print(f"[usage] Inserted uid={uid} month={m} secs={secs}")
+
     except Exception as e:
-        print(f"Usage err: {e}")
+        print(f"[usage] ERROR uid={uid}: {e}")
+
 
 def verify_razorpay_signature(order_id, payment_id, signature):
     msg = f"{order_id}|{payment_id}"
@@ -113,8 +125,8 @@ async def transcribe(
         raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
 
     fb = await file.read()
-    if len(fb) > 25 * 1024 * 1024:
-        raise HTTPException(413, "25MB se badi file nahi chalegi!")
+    if len(fb) > 50 * 1024 * 1024:
+        raise HTTPException(413, "50MB se badi file nahi chalegi!")
 
     try:
         data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
@@ -237,8 +249,8 @@ async def transcribe_guest(
 ):
     """No auth needed — guest gets 4 min, tracked client-side"""
     fb = await file.read()
-    if len(fb) > 25*1024*1024:
-        raise HTTPException(413, "25MB se badi file nahi chalegi!")
+    if len(fb) > 50*1024*1024:
+        raise HTTPException(413, "50MB se badi file nahi chalegi!")
     try:
         data = await call_groq_whisper(fb, file.filename, file.content_type, model, language)
         return data
@@ -261,24 +273,33 @@ async def transcribe_url(
         raise HTTPException(400, "Only YouTube, Instagram, and Facebook links are supported.")
 
     # Check auth & usage
+    is_logged_in = False
+    uid = None
+    plan = "free"
     if authorization and authorization.startswith("Bearer "):
-        try:
-            user = get_user(authorization.split(" ")[1])
-            uid  = str(user.id)
-            plan = get_plan(uid)
-            used = get_usage(uid)
-            limit = PLAN_LIM_SEC.get(plan, 600)
-            if used >= limit:
-                raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
-            is_logged_in = True
-        except HTTPException:
-            raise
-        except:
-            is_logged_in = False
-            uid = None
-    else:
-        is_logged_in = False
-        uid = None
+        token = authorization.split(" ")[1]
+        # Try to get user - retry once if first attempt fails
+        for attempt in range(2):
+            try:
+                user = sb().auth.get_user(token).user
+                if user and user.id:
+                    uid  = str(user.id)
+                    plan = get_plan(uid)
+                    used = get_usage(uid)
+                    limit = PLAN_LIM_SEC.get(plan, 600)
+                    if used >= limit:
+                        raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
+                    is_logged_in = True
+                    break
+            except HTTPException as he:
+                if he.status_code == 429:
+                    raise
+                break
+            except Exception as e:
+                print(f"Auth attempt {attempt+1} failed: {e}")
+                if attempt == 0:
+                    import asyncio
+                    await asyncio.sleep(0.5)
 
     # Download audio using yt-dlp
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -288,7 +309,7 @@ async def transcribe_url(
             '--extract-audio',
             '--audio-format', 'mp3',
             '--audio-quality', '5',
-            '--max-filesize', '25m',
+            '--max-filesize', '50m',
             '--output', out_path,
             '--no-playlist',
             '--quiet',
@@ -318,8 +339,8 @@ async def transcribe_url(
 
         # Check file size
         fsize = os.path.getsize(audio_file)
-        if fsize > 25 * 1024 * 1024:
-            raise HTTPException(413, "Audio too large (max 25MB). Try a shorter video.")
+        if fsize > 50 * 1024 * 1024:
+            raise HTTPException(413, "Audio too large (max 50MB). Try a shorter video.")
 
         with open(audio_file, 'rb') as f:
             fb = f.read()
@@ -340,6 +361,31 @@ async def transcribe_url(
 
 PLAN_LIM_SEC = {"free": 600, "starter": 7200, "pro": 30000}
 
+
+
+
+@app.get("/debug-usage")
+async def debug_usage(authorization: str = Header(None)):
+    """Debug endpoint to check usage directly from DB"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Token required")
+    user = get_user(authorization.split(" ")[1])
+    uid = str(user.id)
+    m = cur_month()
+    try:
+        r = sb().table("usage").select("*").eq("user_id", uid).execute()
+        plan = get_plan(uid)
+        used = get_usage(uid)
+        return {
+            "uid": uid,
+            "month": m,
+            "plan": plan,
+            "usage_seconds": used,
+            "usage_minutes": round(used/60, 2),
+            "all_rows": r.data
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/convert")
 async def convert_text(
