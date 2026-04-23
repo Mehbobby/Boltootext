@@ -997,7 +997,7 @@ async function doGoUrl() {
     clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
     if (!resp.ok) {
       const err=await resp.json().catch(()=>({}))
-      const det=err.detail||''
+      const det=String(err.detail||'')
       if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes.'); return }
       throw new Error(det||'Server error '+resp.status)
     }
