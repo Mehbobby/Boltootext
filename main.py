@@ -20,14 +20,25 @@ PLAN_PRICES = {"starter": 9900, "pro": 29900}
 def sb():
     return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+def sb_anon():
+    """Client for user token verification"""
+    return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
 def cur_month():
     return datetime.now().strftime("%Y-%m")
 
 def get_user(token):
+    """Verify JWT token and return user"""
     try:
-        return sb().auth.get_user(token).user
-    except:
-        raise HTTPException(401, "Login karo pehle!")
+        # Use anon client to verify user JWT tokens
+        client = sb_anon()
+        resp = client.auth.get_user(token)
+        if resp.user:
+            return resp.user
+        raise Exception("No user")
+    except Exception as e:
+        print(f"Auth error: {e}")
+        raise HTTPException(401, "Invalid or expired token")
 
 def get_plan(uid):
     try:
