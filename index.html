@@ -333,7 +333,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <input type="file" id="fi" accept="video/*,audio/*,.mp3,.mp4,.wav,.m4a,.webm,.ogg,.flac" onchange="pickFile(this.files[0])"/>
         <span class="dz-icon">🎬</span>
         <div class="dz-title">Click to upload or drag & drop</div>
-        <div class="dz-sub">MP4 · MOV · MP3 · WAV · M4A · WEBM<br><b>Max 25MB</b></div>
+        <div class="dz-sub">MP4 · MOV · MP3 · WAV · M4A · WEBM<br><b>Max 50MB</b></div>
       </div>
       <div class="file-row" id="fRow">
         <div class="f-icon">📁</div>
@@ -452,7 +452,13 @@ const RZ_KEY        = 'rzp_test_SZqFaH7NOAMrJX'
 const GUEST_MAX     = 4 * 60
 const PLAN_LIM      = { free:600, starter:7200, pro:30000 }
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storage: window.localStorage
+  }
+})
 let sess=null, uData=null, selFile=null, rawTxt='', displayTxt='', segments=[], sPlan='starter'
 let chosenFmt='hinglish', chosenQuality='fast', showTs=false
 
@@ -711,6 +717,10 @@ window.rmFile = () => {
 window.doGo = async () => {
   if (activeTab === 'url') { await doGoUrl(); return }
   if (!selFile) return
+  // Refresh session before request
+  const { data: sd } = await sb.auth.getSession()
+  sess = sd?.session || null
+
   if (!sess && gSec() >= GUEST_MAX) { openModal('loginM', 'limit'); return }
   if (sess && uData) {
     const lim = PLAN_LIM[uData.plan]||PLAN_LIM.free
@@ -735,11 +745,12 @@ window.doGo = async () => {
   fd.append('file', selFile)
   fd.append('model', model)
 
-  // Always use guest endpoint (auth backend fix pending)
-  const url = BACKEND+'/transcribe-guest'
+  // Use correct endpoint based on login status
+  const url = sess ? BACKEND+'/transcribe' : BACKEND+'/transcribe-guest'
+  const headers = sess ? {Authorization: `Bearer ${sess.access_token}`} : {}
 
   try {
-    const resp = await fetch(url, {method:'POST', body:fd})
+    const resp = await fetch(url, {method:'POST', headers, body:fd})
     clearTimeout(t1); clearTimeout(t2)
 
     if (!resp.ok) {
@@ -754,8 +765,15 @@ window.doGo = async () => {
     // Update usage bar
     const dur = parseInt(data.duration||0) + 1
     if (sess && uData) {
-      uData.usage_seconds = (uData.usage_seconds||0) + dur
+      if (data.usage) {
+        uData.usage_seconds = data.usage.used
+        uData.limit_seconds = data.usage.limit
+      } else {
+        uData.usage_seconds = (uData.usage_seconds||0) + dur
+      }
       renderUI()
+      // Also reload from server to confirm accurate usage
+      setTimeout(async () => { await loadUser(); renderUI() }, 2000)
     } else {
       addG(dur)
       renderUI()
@@ -973,11 +991,17 @@ window.dlDOCX = async () => {
 async function doGoUrl() {
   const videoUrl = document.getElementById('urlInput').value.trim()
   if (!videoUrl) return
+
+  // Refresh session before making request
+  const { data: sessionData } = await sb.auth.getSession()
+  sess = sessionData?.session || null
+
   if (!sess && gSec() >= GUEST_MAX) { openModal('loginM'); return }
   if (sess && uData) {
     const lim = PLAN_LIM[uData.plan]||PLAN_LIM.free
     if (uData.usage_seconds >= lim) { openPricing('You have used all your free minutes. Upgrade to continue!'); return }
   }
+
   const btn=document.getElementById('goBtn'), pw=document.getElementById('pw')
   const pf=document.getElementById('pf'), pm=document.getElementById('pm')
   btn.disabled=true; btn.textContent='⏳ Processing...'
@@ -988,22 +1012,37 @@ async function doGoUrl() {
   const t1=setTimeout(()=>{pf.style.width='40%';pm.textContent='Extracting audio...'},5000)
   const t2=setTimeout(()=>{pf.style.width='65%';pm.textContent='AI is transcribing...'},15000)
   const t3=setTimeout(()=>{pf.style.width='85%';pm.textContent='Almost done...'},30000)
+
   const fd=new FormData()
   fd.append('url', videoUrl)
   fd.append('model', chosenQuality==='accurate' ? 'whisper-large-v3' : 'whisper-large-v3-turbo')
-  const headers = sess ? {Authorization:`Bearer ${sess.access_token}`} : {}
+
+  // Always include auth token if session exists
+  const headers = {}
+  if (sess && sess.access_token) {
+    headers['Authorization'] = `Bearer ${sess.access_token}`
+  }
+
   try {
-    const resp = await fetch(BACKEND+'/transcribe-url',{method:'POST',headers,body:fd})
+    const endpoint = sess ? BACKEND+'/transcribe-url' : BACKEND+'/transcribe-url'
+    const resp = await fetch(endpoint, {method:'POST', headers, body:fd})
     clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
     if (!resp.ok) {
       const err=await resp.json().catch(()=>({}))
-      const det=String(err.detail||'')
+      const det=err.detail||''
       if (det.startsWith('LIMIT_EXCEEDED')) { pw.classList.remove('show'); resetBtn(); openPricing('You have used all your free minutes.'); return }
       throw new Error(det||'Server error '+resp.status)
     }
     const data=await resp.json()
     rawTxt=data.text||''; segments=data.segments||[]
-    if (sess && data.usage) { uData.usage_seconds=data.usage.used; renderUI() }
+    if (sess && data.usage) {
+      uData.usage_seconds=data.usage.used
+      uData.limit_seconds=data.usage.limit
+      renderUI()
+    } else if (sess) {
+      // Usage not in response — reload from server
+      await loadUser()
+    }
     if (!sess) { addG(parseInt(data.duration||0)+1); renderUI(); if(gSec()>=GUEST_MAX) setTimeout(()=>openModal('loginM'),1200) }
     pf.style.width='100%'; pm.textContent='Done! ✓'
     if (chosenFmt==='hindi') { displayTxt=rawTxt; setTimeout(()=>{ pw.classList.remove('show'); showOut(); resetBtn() },400) }
@@ -1065,6 +1104,9 @@ window.doPay = async () => {
 // Init exports as disabled
 disableExports(true)
 init()
+
+// Refresh usage only when page is fully reloaded
+// (not on tab switch - that was causing reset)
 </script>
 </body>
 </html>
