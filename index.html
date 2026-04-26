@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>BolToText — AI-Powered Transcription</title>
+<title>BolToText — AI-Powered Audio & Video Transcription in Hindi, Hinglish & English</title>
+<meta name="description" content="Convert audio and video to text in seconds. Support for Hindi, Hinglish, and English. Fast, accurate, and affordable AI transcription.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -13,7 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.umd.min.js"></script>
 <style>
 /* ============================================
-   MODERN BOLTOOTEXT UI - PREMIUM SAAS DESIGN
+   MODERN BOLTOOTEXT UI - COMPLETE PREMIUM SAAS
    ============================================ */
 
 /* RESET & BASE */
@@ -24,12 +25,13 @@
 }
 
 :root {
-  /* Color System - Premium Dark Theme */
+  /* Color System */
   --bg-primary: #0A0A0F;
   --bg-secondary: #111118;
   --bg-tertiary: #1A1A24;
+  --bg-card: #14141C;
   
-  /* Gradient Colors */
+  /* Gradients */
   --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
   --gradient-secondary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --gradient-dark: linear-gradient(180deg, #0A0A0F 0%, #111118 100%);
@@ -38,19 +40,19 @@
   /* Orange Accents */
   --orange-500: #FF6B35;
   --orange-600: #F7931E;
-  --orange-glow: rgba(255, 107, 53, 0.2);
+  --orange-glow: rgba(255, 107, 53, 0.25);
   --orange-dim: rgba(255, 107, 53, 0.1);
   
-  /* Text Colors */
+  /* Text */
   --text-primary: #FFFFFF;
   --text-secondary: #A0A0AB;
   --text-tertiary: #6B6B78;
   
-  /* Border & Dividers */
+  /* Borders */
   --border-color: rgba(255, 255, 255, 0.08);
   --border-color-hover: rgba(255, 255, 255, 0.15);
   
-  /* Status Colors */
+  /* Status */
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;
@@ -63,8 +65,9 @@
   --spacing-xl: 32px;
   --spacing-2xl: 48px;
   --spacing-3xl: 64px;
+  --spacing-4xl: 96px;
   
-  /* Border Radius */
+  /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -109,7 +112,7 @@ body {
 }
 
 /* ============================================
-   NAVBAR - GLASSMORPHISM STYLE
+   NAVBAR
    ============================================ */
 
 .navbar {
@@ -195,6 +198,7 @@ body {
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   position: relative;
+  cursor: pointer;
 }
 
 .nav-link:hover {
@@ -206,19 +210,7 @@ body {
   color: var(--orange-500);
 }
 
-.nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 2px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-full);
-}
-
-/* Mobile Menu Toggle */
+/* Mobile Menu */
 .mobile-menu-toggle {
   display: none;
   width: 40px;
@@ -332,12 +324,6 @@ body {
   background-clip: text;
 }
 
-.credits-subtext {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  margin-top: 2px;
-}
-
 .dropdown-item {
   display: flex;
   align-items: center;
@@ -373,7 +359,7 @@ body {
 }
 
 /* ============================================
-   HERO SECTION - PREMIUM LANDING
+   HERO SECTION
    ============================================ */
 
 .hero {
@@ -382,12 +368,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-3xl) var(--spacing-lg);
+  padding: calc(72px + var(--spacing-3xl)) var(--spacing-lg) var(--spacing-3xl);
   overflow: hidden;
   background: var(--gradient-dark);
 }
 
-/* Animated Background Gradient */
 .hero::before {
   content: '';
   position: absolute;
@@ -406,7 +391,6 @@ body {
   50% { transform: translate(-10%, -10%) rotate(180deg); }
 }
 
-/* Floating Orbs */
 .hero-orb {
   position: absolute;
   border-radius: 50%;
@@ -422,7 +406,6 @@ body {
   background: radial-gradient(circle, var(--orange-500), transparent);
   top: 10%;
   left: 10%;
-  animation-delay: 0s;
 }
 
 .orb-2 {
@@ -494,18 +477,6 @@ body {
   display: inline-block;
 }
 
-.gradient-text::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-full);
-  opacity: 0.3;
-}
-
 .hero-subtitle {
   font-size: clamp(16px, 3vw, 20px);
   color: var(--text-secondary);
@@ -534,8 +505,40 @@ body {
   }
 }
 
+/* Trust Badges */
+.trust-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-3xl);
+  flex-wrap: wrap;
+  animation: fade-in-up 0.6s ease 1s both;
+}
+
+.trust-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.trust-badge-value {
+  font-size: 32px;
+  font-weight: 800;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.trust-badge-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
 /* ============================================
-   BUTTONS - PREMIUM STYLE
+   BUTTONS
    ============================================ */
 
 .btn {
@@ -582,10 +585,6 @@ body {
   box-shadow: 0 6px 24px var(--orange-glow);
 }
 
-.btn-primary:active {
-  transform: translateY(0);
-}
-
 .btn-secondary {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-color);
@@ -602,7 +601,6 @@ body {
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid transparent;
 }
 
 .btn-ghost:hover {
@@ -623,11 +621,399 @@ body {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none !important;
 }
 
 /* ============================================
-   MAIN DASHBOARD SECTION
+   SECTIONS
+   ============================================ */
+
+.section {
+  padding: var(--spacing-4xl) var(--spacing-lg);
+  position: relative;
+}
+
+.section-alt {
+  background: var(--bg-secondary);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: var(--spacing-3xl);
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: var(--orange-dim);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--orange-500);
+  margin-bottom: var(--spacing-md);
+}
+
+.section-title {
+  font-size: clamp(32px, 6vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--spacing-md);
+}
+
+.section-subtitle {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* ============================================
+   FEATURES SECTION
+   ============================================ */
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.feature-card {
+  background: var(--gradient-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  transition: all 0.3s ease;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-color-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--orange-dim);
+  border-radius: var(--radius-md);
+  font-size: 28px;
+  margin-bottom: var(--spacing-md);
+}
+
+.feature-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.feature-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ============================================
+   PRICING SECTION
+   ============================================ */
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.pricing-card.popular {
+  border-color: var(--orange-500);
+  box-shadow: 0 0 32px var(--orange-glow);
+  transform: scale(1.05);
+}
+
+.pricing-card.popular::before {
+  content: 'POPULAR';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-color-hover);
+}
+
+.pricing-card.popular:hover {
+  transform: scale(1.05) translateY(-4px);
+}
+
+.pricing-name {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.pricing-price {
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: var(--spacing-xs);
+}
+
+.pricing-price span {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pricing-desc {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.pricing-features {
+  list-style: none;
+  margin-bottom: var(--spacing-lg);
+}
+
+.pricing-features li {
+  padding: var(--spacing-sm) 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.pricing-features li::before {
+  content: '✓';
+  color: var(--success);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   TESTIMONIALS SECTION
+   ============================================ */
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.testimonial-card {
+  background: var(--gradient-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-color-hover);
+}
+
+.testimonial-stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--spacing-md);
+  font-size: 16px;
+}
+
+.testimonial-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.testimonial-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.testimonial-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.testimonial-role {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+/* ============================================
+   FAQ SECTION
+   ============================================ */
+
+.faq-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: var(--gradient-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+  border-color: var(--border-color-hover);
+}
+
+.faq-question {
+  width: 100%;
+  padding: var(--spacing-lg);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.faq-icon {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.faq-item.active .faq-icon {
+  transform: rotate(45deg);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.faq-answer-content {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.faq-item.active .faq-answer {
+  max-height: 500px;
+}
+
+/* ============================================
+   CTA SECTION
+   ============================================ */
+
+.cta-section {
+  background: var(--gradient-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-4xl) var(--spacing-lg);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, var(--orange-glow) 0%, transparent 70%);
+  opacity: 0.3;
+  animation: gradient-shift 15s ease infinite;
+}
+
+.cta-content {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-title {
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 800;
+  margin-bottom: var(--spacing-md);
+}
+
+.cta-subtitle {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* ============================================
+   DASHBOARD
    ============================================ */
 
 .dashboard {
@@ -660,7 +1046,7 @@ body {
 }
 
 /* ============================================
-   CARDS - GLASSMORPHISM
+   CARDS
    ============================================ */
 
 .card {
@@ -838,7 +1224,6 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-full);
   overflow: hidden;
-  position: relative;
 }
 
 .usage-bar-fill {
@@ -935,17 +1320,8 @@ body {
   overflow-y: auto;
 }
 
-.transcript-box::-webkit-scrollbar {
-  width: 8px;
-}
-
-.transcript-box::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-full);
-}
-
 /* ============================================
-   LOADING STATES
+   LOADING & TOAST
    ============================================ */
 
 .loading-overlay {
@@ -990,10 +1366,6 @@ body {
   color: var(--text-secondary);
 }
 
-/* ============================================
-   TOAST NOTIFICATIONS
-   ============================================ */
-
 .toast {
   position: fixed;
   bottom: var(--spacing-lg);
@@ -1031,6 +1403,7 @@ body {
   justify-content: center;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
+  font-size: 20px;
 }
 
 .toast.success .toast-icon {
@@ -1059,20 +1432,10 @@ body {
 }
 
 /* ============================================
-   RESPONSIVE DESIGN
+   RESPONSIVE
    ============================================ */
 
-/* Tablet */
 @media (max-width: 1024px) {
-  .navbar-container {
-    padding: 0 var(--spacing-md);
-  }
-  
-  .dashboard {
-    padding-left: var(--spacing-md);
-    padding-right: var(--spacing-md);
-  }
-  
   .nav-links {
     display: none;
   }
@@ -1082,33 +1445,43 @@ body {
   }
 }
 
-/* Mobile */
 @media (max-width: 768px) {
   .navbar-container {
     height: 64px;
   }
   
-  .navbar-logo {
-    font-size: 20px;
-  }
-  
-  .logo-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 18px;
-  }
-  
   .hero {
-    min-height: auto;
-    padding: var(--spacing-2xl) var(--spacing-md);
+    padding: calc(64px + var(--spacing-2xl)) var(--spacing-md) var(--spacing-2xl);
   }
   
-  .hero-title {
-    font-size: 36px;
+  .section {
+    padding: var(--spacing-3xl) var(--spacing-md);
   }
   
-  .hero-subtitle {
-    font-size: 16px;
+  .dashboard {
+    padding: calc(64px + var(--spacing-lg)) var(--spacing-md) var(--spacing-2xl);
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .features-grid,
+  .pricing-grid,
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .pricing-card.popular {
+    transform: none;
+  }
+  
+  .pricing-card.popular:hover {
+    transform: translateY(-4px);
+  }
+  
+  .trust-badges {
+    gap: var(--spacing-lg);
   }
   
   .hero-cta {
@@ -1118,59 +1491,10 @@ body {
   .btn {
     width: 100%;
   }
-  
-  .dashboard {
-    padding: calc(64px + var(--spacing-lg)) var(--spacing-md) var(--spacing-2xl);
-  }
-  
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-  
-  .upload-card {
-    padding: var(--spacing-lg);
-  }
-  
-  .upload-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 24px;
-  }
-  
-  .format-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .toast {
-    left: var(--spacing-md);
-    right: var(--spacing-md);
-    max-width: none;
-  }
-  
-  .user-dropdown {
-    width: 260px;
-  }
-}
-
-/* Small Mobile */
-@media (max-width: 480px) {
-  .hero-title {
-    font-size: 32px;
-  }
-  
-  .btn {
-    padding: 12px 24px;
-    font-size: 14px;
-  }
-  
-  .card {
-    padding: var(--spacing-md);
-  }
 }
 
 /* ============================================
-   UTILITY CLASSES
+   UTILITY
    ============================================ */
 
 .hidden {
@@ -1180,22 +1504,6 @@ body {
 .show {
   display: block !important;
 }
-
-.flex {
-  display: flex !important;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.mt-xl {
-  margin-top: var(--spacing-xl);
-}
-
-.mb-xl {
-  margin-bottom: var(--spacing-xl);
-}
 </style>
 </head>
 <body>
@@ -1203,16 +1511,16 @@ body {
 <!-- NAVBAR -->
 <nav class="navbar" id="navbar">
   <div class="navbar-container">
-    <a href="#" class="navbar-logo">
+    <a href="#" class="navbar-logo" onclick="scrollToTop(); return false;">
       <div class="logo-icon">🎙️</div>
       <span>Bol<span style="color: var(--orange-500);">To</span>Text</span>
     </a>
     
     <div class="navbar-nav">
       <ul class="nav-links">
-        <li><a href="#" class="nav-link active">Dashboard</a></li>
-        <li><a href="#" class="nav-link">History</a></li>
-        <li><a href="#" class="nav-link">Pricing</a></li>
+        <li><a href="#" class="nav-link" onclick="goToDashboard(); return false;">Dashboard</a></li>
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="#pricing" class="nav-link">Pricing</a></li>
       </ul>
       
       <button class="mobile-menu-toggle">
@@ -1221,12 +1529,10 @@ body {
         <span></span>
       </button>
       
-      <!-- Login Button (Guest State) -->
       <button class="btn btn-primary btn-sm" id="loginBtn" style="display: none;">
         Sign In
       </button>
       
-      <!-- User Menu (Logged In State) -->
       <div class="user-menu" id="userMenu" style="display: none;">
         <div class="user-avatar" id="userAvatar">A</div>
         <div class="user-dropdown" id="userDropdown">
@@ -1241,15 +1547,12 @@ body {
             <div class="credits-subtext" id="dropdownPlan">Free Plan</div>
           </div>
           
-          <button class="dropdown-item">
-            <span>⚙️</span> Settings
-          </button>
-          <button class="dropdown-item">
-            <span>📊</span> Usage Stats
-          </button>
-          <button class="dropdown-item" onclick="window.location.href='#pricing'">
+          <a href="#dashboard" class="dropdown-item" onclick="goToDashboard(); return false;">
+            <span>📊</span> Dashboard
+          </a>
+          <a href="#pricing" class="dropdown-item">
             <span style="color: var(--orange-500)">⭐</span> Upgrade Plan
-          </button>
+          </a>
           
           <div class="dropdown-divider"></div>
           
@@ -1264,7 +1567,6 @@ body {
 
 <!-- HERO SECTION -->
 <section class="hero" id="heroSection">
-  <!-- Floating Orbs -->
   <div class="hero-orb orb-1"></div>
   <div class="hero-orb orb-2"></div>
   
@@ -1287,9 +1589,328 @@ body {
       <button class="btn btn-primary btn-lg" onclick="scrollToDashboard()">
         <span>🚀</span> Start Transcribing Free
       </button>
-      <button class="btn btn-secondary btn-lg" onclick="window.location.href='#pricing'">
+      <a href="#pricing" class="btn btn-secondary btn-lg">
         <span>💎</span> View Pricing
-      </button>
+      </a>
+    </div>
+    
+    <div class="trust-badges">
+      <div class="trust-badge">
+        <div class="trust-badge-value">10K+</div>
+        <div class="trust-badge-label">Users</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge-value">50K+</div>
+        <div class="trust-badge-label">Transcripts</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge-value">98%</div>
+        <div class="trust-badge-label">Accuracy</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge-value">4.9/5</div>
+        <div class="trust-badge-label">Rating</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section class="section section-alt" id="features">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Features</span>
+      <h2 class="section-title">Everything You Need</h2>
+      <p class="section-subtitle">
+        Powerful features to make transcription fast, accurate, and effortless
+      </p>
+    </div>
+    
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3 class="feature-title">Multi-Language Support</h3>
+        <p class="feature-desc">
+          Transcribe in Hindi, Hinglish, or English. Perfect for bilingual content and Indian audiences.
+        </p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Lightning Fast</h3>
+        <p class="feature-desc">
+          Get your transcripts in seconds, not hours. Our AI processes files at incredible speeds.
+        </p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3 class="feature-title">High Accuracy</h3>
+        <p class="feature-desc">
+          98%+ accuracy with advanced AI models. Choose between fast or accurate modes.
+        </p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">📤</div>
+        <h3 class="feature-title">Multiple Export Formats</h3>
+        <p class="feature-desc">
+          Export as TXT, SRT, PDF, or DOCX. Compatible with all major platforms and tools.
+        </p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🎬</div>
+        <h3 class="feature-title">Video & Audio</h3>
+        <p class="feature-desc">
+          Support for all major formats: MP4, MOV, MP3, WAV, M4A, WEBM. Up to 50MB file size.
+        </p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3 class="feature-title">Secure & Private</h3>
+        <p class="feature-desc">
+          Your files are encrypted and automatically deleted after processing. We never store your content.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING SECTION -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Pricing</span>
+      <h2 class="section-title">Simple, Transparent Pricing</h2>
+      <p class="section-subtitle">
+        Choose the plan that fits your needs. Upgrade or downgrade anytime.
+      </p>
+    </div>
+    
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-name">Free</div>
+        <div class="pricing-price">₹0<span>/month</span></div>
+        <p class="pricing-desc">Perfect for trying out</p>
+        
+        <ul class="pricing-features">
+          <li>10 minutes per month</li>
+          <li>All output formats</li>
+          <li>Hindi, Hinglish, English</li>
+          <li>Fast & Accurate modes</li>
+          <li>Basic support</li>
+        </ul>
+        
+        <button class="btn btn-secondary" style="width: 100%;" onclick="handlePricing('free')">
+          Get Started Free
+        </button>
+      </div>
+      
+      <div class="pricing-card popular">
+        <div class="pricing-name">Starter</div>
+        <div class="pricing-price">₹99<span>/month</span></div>
+        <p class="pricing-desc">For regular users</p>
+        
+        <ul class="pricing-features">
+          <li>120 minutes per month</li>
+          <li>All output formats</li>
+          <li>Priority processing</li>
+          <li>Advanced accuracy</li>
+          <li>Email support</li>
+          <li>No watermarks</li>
+        </ul>
+        
+        <button class="btn btn-primary" style="width: 100%;" onclick="handlePricing('starter')">
+          Upgrade Now
+        </button>
+      </div>
+      
+      <div class="pricing-card">
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-price">₹299<span>/month</span></div>
+        <p class="pricing-desc">For power users</p>
+        
+        <ul class="pricing-features">
+          <li>Unlimited minutes</li>
+          <li>All output formats</li>
+          <li>Highest priority</li>
+          <li>Maximum accuracy</li>
+          <li>24/7 priority support</li>
+          <li>API access (coming soon)</li>
+        </ul>
+        
+        <button class="btn btn-secondary" style="width: 100%;" onclick="handlePricing('pro')">
+          Go Pro
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS SECTION -->
+<section class="section section-alt" id="testimonials">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Testimonials</span>
+      <h2 class="section-title">Loved by Content Creators</h2>
+      <p class="section-subtitle">
+        See what our users have to say about BolToText
+      </p>
+    </div>
+    
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+        <p class="testimonial-text">
+          "BolToText has saved me hours of work. The Hindi transcription is incredibly accurate, and the Hinglish option is perfect for my YouTube audience!"
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">RK</div>
+          <div>
+            <div class="testimonial-name">Rahul Kumar</div>
+            <div class="testimonial-role">YouTuber, 500K+ subscribers</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="testimonial-card">
+        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+        <p class="testimonial-text">
+          "As a podcast creator, transcription used to be a nightmare. BolToText makes it so easy. Fast, accurate, and affordable!"
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">PS</div>
+          <div>
+            <div class="testimonial-name">Priya Sharma</div>
+            <div class="testimonial-role">Podcast Host</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="testimonial-card">
+        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+        <p class="testimonial-text">
+          "The best transcription tool for Indian content. Support for Hindi and Hinglish is a game-changer. Highly recommended!"
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">AS</div>
+          <div>
+            <div class="testimonial-name">Amit Singh</div>
+            <div class="testimonial-role">Content Marketer</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ SECTION -->
+<section class="section" id="faq">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">FAQ</span>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <p class="section-subtitle">
+        Everything you need to know about BolToText
+      </p>
+    </div>
+    
+    <div class="faq-container">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span>What file formats are supported?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            We support all major audio and video formats including MP4, MOV, MP3, WAV, M4A, and WEBM. Maximum file size is 50MB for the free plan.
+          </div>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span>How accurate is the transcription?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Our AI achieves 98%+ accuracy in most cases. Accuracy depends on audio quality, accent, and background noise. Use "Accurate Mode" for the best results.
+          </div>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span>What's the difference between Fast and Accurate modes?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Fast Mode processes in seconds and is great for quick drafts. Accurate Mode takes slightly longer but provides higher accuracy and better punctuation.
+          </div>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span>Is my data secure?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Absolutely! All files are encrypted during upload and processing. We automatically delete your files after transcription is complete. We never store or share your content.
+          </div>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span>Can I cancel my subscription anytime?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Yes! You can upgrade, downgrade, or cancel your subscription at any time. No questions asked, no hidden fees.
+          </div>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span>Do unused minutes roll over?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Free plan minutes reset monthly. Paid plan minutes do not roll over, but you can always upgrade to Pro for unlimited transcription.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA SECTION -->
+<section class="section">
+  <div class="container">
+    <div class="cta-section">
+      <div class="cta-content">
+        <h2 class="cta-title">Ready to Get Started?</h2>
+        <p class="cta-subtitle">
+          Join thousands of creators who trust BolToText for their transcription needs
+        </p>
+        <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-lg" onclick="scrollToDashboard()">
+            <span>🚀</span> Start Free Trial
+          </button>
+          <a href="#pricing" class="btn btn-secondary btn-lg">
+            <span>💎</span> View Plans
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1301,7 +1922,6 @@ body {
     <p class="dashboard-subtitle">Upload your audio or video file and get instant transcription</p>
   </div>
   
-  <!-- Usage Stats Card -->
   <div class="card" id="usageCard" style="display: none; margin-bottom: var(--spacing-lg);">
     <div class="card-header">
       <span class="card-title">Usage This Month</span>
@@ -1325,9 +1945,7 @@ body {
     </div>
   </div>
   
-  <!-- Main Grid -->
   <div class="dashboard-grid">
-    <!-- Upload Card -->
     <div class="upload-card" id="uploadZone">
       <div class="upload-icon">📁</div>
       <h3 class="upload-title">Drop your file here</h3>
@@ -1340,7 +1958,6 @@ body {
       <input type="file" id="fileInput" accept="audio/*,video/*" style="display: none;">
     </div>
     
-    <!-- Format Selection Card -->
     <div class="card">
       <div class="card-header">
         <span class="card-title">Output Format</span>
@@ -1368,7 +1985,6 @@ body {
       </div>
     </div>
     
-    <!-- Speed Mode Card -->
     <div class="card">
       <div class="card-header">
         <span class="card-title">Processing Mode</span>
@@ -1391,7 +2007,6 @@ body {
     </div>
   </div>
   
-  <!-- File Preview (Hidden by default) -->
   <div class="card" id="filePreview" style="display: none; margin-top: var(--spacing-lg);">
     <div class="card-header">
       <span class="card-title">Selected File</span>
@@ -1400,11 +2015,11 @@ body {
       </button>
     </div>
     
-    <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+    <div style="display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap;">
       <div style="width: 48px; height: 48px; background: var(--orange-dim); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 24px;">
         🎬
       </div>
-      <div style="flex: 1;">
+      <div style="flex: 1; min-width: 200px;">
         <div style="font-weight: 600; margin-bottom: 4px;" id="fileName">filename.mp4</div>
         <div style="font-size: 13px; color: var(--text-tertiary);" id="fileSize">0 MB</div>
       </div>
@@ -1414,7 +2029,6 @@ body {
     </div>
   </div>
   
-  <!-- Transcript Output -->
   <div class="transcript-container" id="transcriptContainer">
     <div class="transcript-header">
       <h3 class="transcript-title">Your Transcript</h3>
@@ -1442,7 +2056,6 @@ body {
   </div>
 </section>
 
-<!-- LOADING OVERLAY -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-content">
     <div class="spinner"></div>
@@ -1450,7 +2063,6 @@ body {
   </div>
 </div>
 
-<!-- TOAST NOTIFICATION -->
 <div class="toast success" id="toast" style="display: none;">
   <div class="toast-icon">✓</div>
   <div class="toast-content">
@@ -1461,7 +2073,7 @@ body {
 
 <script>
 // ============================================
-// SUPABASE CONFIG
+// CONFIG
 // ============================================
 const SUPABASE_URL = 'https://swggncuqotpwbdmkimed.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3Z2duY3Vxb3Rwd2JkbWtpbWVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEzMzQ1NTcsImV4cCI6MjA0NjkxMDU1N30.kPXWBTyFz43jY_xNHb3IfNcgj3-wsFUZD0Q8wl9wEis';
@@ -1479,26 +2091,7 @@ let selectedSpeed = 'fast';
 let transcriptData = null;
 
 // ============================================
-// DOM ELEMENTS
-// ============================================
-const navbar = document.getElementById('navbar');
-const heroSection = document.getElementById('heroSection');
-const dashboardSection = document.getElementById('dashboardSection');
-const loginBtn = document.getElementById('loginBtn');
-const userMenu = document.getElementById('userMenu');
-const userAvatar = document.getElementById('userAvatar');
-const userDropdown = document.getElementById('userDropdown');
-const logoutBtn = document.getElementById('logoutBtn');
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('fileInput');
-const filePreview = document.getElementById('filePreview');
-const transcribeBtn = document.getElementById('transcribeBtn');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const transcriptContainer = document.getElementById('transcriptContainer');
-const usageCard = document.getElementById('usageCard');
-
-// ============================================
-// INITIALIZATION
+// INIT
 // ============================================
 window.addEventListener('load', async () => {
   await checkAuth();
@@ -1511,34 +2104,53 @@ async function checkAuth() {
   
   if (data.session) {
     currentUser = data.session.user;
-    showDashboard();
+    showLoggedInState();
     await loadUserData();
   } else {
-    showHero();
+    showLoggedOutState();
   }
 }
 
-function showHero() {
-  heroSection.style.display = 'flex';
-  dashboardSection.style.display = 'none';
-  loginBtn.style.display = 'inline-flex';
-  userMenu.style.display = 'none';
+function showLoggedOutState() {
+  document.getElementById('heroSection').style.display = 'flex';
+  document.getElementById('dashboardSection').style.display = 'none';
+  document.getElementById('loginBtn').style.display = 'inline-flex';
+  document.getElementById('userMenu').style.display = 'none';
 }
 
-function showDashboard() {
-  heroSection.style.display = 'none';
-  dashboardSection.style.display = 'block';
-  loginBtn.style.display = 'none';
-  userMenu.style.display = 'block';
-  usageCard.style.display = 'block';
+function showLoggedInState() {
+  document.getElementById('loginBtn').style.display = 'none';
+  document.getElementById('userMenu').style.display = 'block';
 }
 
 function scrollToDashboard() {
   if (!currentUser) {
     login();
   } else {
-    dashboardSection.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('heroSection').style.display = 'none';
+    document.getElementById('dashboardSection').style.display = 'block';
+    document.getElementById('usageCard').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+}
+
+function goToDashboard() {
+  if (currentUser) {
+    scrollToDashboard();
+  } else {
+    login();
+  }
+}
+
+function scrollToTop() {
+  if (currentUser) {
+    document.getElementById('heroSection').style.display = 'none';
+    document.getElementById('dashboardSection').style.display = 'block';
+  } else {
+    document.getElementById('heroSection').style.display = 'flex';
+    document.getElementById('dashboardSection').style.display = 'none';
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ============================================
@@ -1558,7 +2170,7 @@ async function login() {
 async function logout() {
   await sb.auth.signOut();
   currentUser = null;
-  showHero();
+  showLoggedOutState();
   showToast('Logged out', 'You have been signed out successfully', 'success');
 }
 
@@ -1572,11 +2184,10 @@ async function loadUserData() {
   const email = currentUser.email;
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   
-  userAvatar.textContent = initials;
+  document.getElementById('userAvatar').textContent = initials;
   document.getElementById('dropdownName').textContent = name;
   document.getElementById('dropdownEmail').textContent = email;
   
-  // Fetch usage data
   const { data: session } = await sb.auth.getSession();
   const token = session?.session?.access_token;
   
@@ -1598,7 +2209,7 @@ async function loadUserData() {
 
 function updateUsageUI(userData) {
   const used = userData.seconds_used || 0;
-  const limit = userData.plan_limit || 600; // 10 min default
+  const limit = userData.plan_limit || 600;
   const usedMin = Math.floor(used / 60);
   const limitMin = Math.floor(limit / 60);
   const percent = Math.min((used / limit) * 100, 100);
@@ -1617,31 +2228,28 @@ function updateUsageUI(userData) {
 }
 
 // ============================================
-// FILE UPLOAD
+// EVENT LISTENERS
 // ============================================
 function setupEventListeners() {
-  // User menu toggle
-  userAvatar.addEventListener('click', () => {
-    userDropdown.classList.toggle('active');
+  document.getElementById('userAvatar').addEventListener('click', () => {
+    document.getElementById('userDropdown').classList.toggle('active');
   });
   
   document.addEventListener('click', (e) => {
-    if (!userMenu.contains(e.target)) {
-      userDropdown.classList.remove('active');
+    if (!document.getElementById('userMenu').contains(e.target)) {
+      document.getElementById('userDropdown').classList.remove('active');
     }
   });
   
-  // Logout
-  logoutBtn.addEventListener('click', logout);
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('loginBtn').addEventListener('click', login);
   
-  // Login
-  loginBtn.addEventListener('click', login);
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
   
-  // Upload zone
   uploadZone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', handleFileSelect);
   
-  // Drag & drop
   uploadZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     uploadZone.classList.add('dragover');
@@ -1660,7 +2268,6 @@ function setupEventListeners() {
     }
   });
   
-  // Format selection
   document.querySelectorAll('.format-option[data-format]').forEach(option => {
     option.addEventListener('click', () => {
       document.querySelectorAll('.format-option[data-format]').forEach(o => o.classList.remove('active'));
@@ -1669,7 +2276,6 @@ function setupEventListeners() {
     });
   });
   
-  // Speed selection
   document.querySelectorAll('.format-option[data-speed]').forEach(option => {
     option.addEventListener('click', () => {
       document.querySelectorAll('.format-option[data-speed]').forEach(o => o.classList.remove('active'));
@@ -1678,17 +2284,14 @@ function setupEventListeners() {
     });
   });
   
-  // Remove file
   document.getElementById('removeFile').addEventListener('click', () => {
     selectedFile = null;
     fileInput.value = '';
-    filePreview.style.display = 'none';
+    document.getElementById('filePreview').style.display = 'none';
   });
   
-  // Transcribe
-  transcribeBtn.addEventListener('click', transcribeFile);
+  document.getElementById('transcribeBtn').addEventListener('click', transcribeFile);
   
-  // Export buttons
   document.getElementById('copyBtn').addEventListener('click', copyTranscript);
   document.getElementById('downloadTxt').addEventListener('click', () => downloadTranscript('txt'));
   document.getElementById('downloadSrt').addEventListener('click', () => downloadTranscript('srt'));
@@ -1702,7 +2305,7 @@ function handleFileSelect(e) {
 }
 
 function handleFile(file) {
-  const maxSize = 50 * 1024 * 1024; // 50MB
+  const maxSize = 50 * 1024 * 1024;
   
   if (file.size > maxSize) {
     showToast('File too large', 'Maximum file size is 50MB', 'error');
@@ -1712,7 +2315,7 @@ function handleFile(file) {
   selectedFile = file;
   document.getElementById('fileName').textContent = file.name;
   document.getElementById('fileSize').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
-  filePreview.style.display = 'block';
+  document.getElementById('filePreview').style.display = 'block';
 }
 
 // ============================================
@@ -1751,7 +2354,7 @@ async function transcribeFile() {
       transcriptData = data;
       displayTranscript(data.transcript);
       showToast('Success', 'Transcription completed!', 'success');
-      await loadUserData(); // Refresh usage
+      await loadUserData();
     } else {
       throw new Error(data.error || 'Transcription failed');
     }
@@ -1764,12 +2367,12 @@ async function transcribeFile() {
 
 function displayTranscript(text) {
   document.getElementById('transcriptBox').textContent = text;
-  transcriptContainer.classList.add('show');
-  transcriptContainer.scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('transcriptContainer').classList.add('show');
+  document.getElementById('transcriptContainer').scrollIntoView({ behavior: 'smooth' });
 }
 
 // ============================================
-// EXPORT FUNCTIONS
+// EXPORT
 // ============================================
 function copyTranscript() {
   const text = document.getElementById('transcriptBox').textContent;
@@ -1848,15 +2451,67 @@ function downloadDOCX(text, filename) {
 }
 
 // ============================================
+// PRICING
+// ============================================
+function handlePricing(plan) {
+  if (plan === 'free') {
+    if (currentUser) {
+      showToast('Already on Free', 'You are already on the free plan', 'success');
+    } else {
+      login();
+    }
+  } else {
+    if (!currentUser) {
+      login();
+      return;
+    }
+    
+    const prices = {
+      starter: 9900,
+      pro: 29900
+    };
+    
+    const options = {
+      key: 'rzp_test_SZqFaH7NOAMrJX',
+      amount: prices[plan],
+      currency: 'INR',
+      name: 'BolToText',
+      description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+      handler: async function(response) {
+        showToast('Payment Successful', 'Your plan has been upgraded!', 'success');
+        await loadUserData();
+      }
+    };
+    
+    const rzp = new Razorpay(options);
+    rzp.open();
+  }
+}
+
+// ============================================
+// FAQ
+// ============================================
+function toggleFAQ(button) {
+  const item = button.parentElement;
+  const isActive = item.classList.contains('active');
+  
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+  
+  if (!isActive) {
+    item.classList.add('active');
+  }
+}
+
+// ============================================
 // UI HELPERS
 // ============================================
 function showLoading(text) {
   document.getElementById('loadingText').textContent = text;
-  loadingOverlay.classList.add('active');
+  document.getElementById('loadingOverlay').classList.add('active');
 }
 
 function hideLoading() {
-  loadingOverlay.classList.remove('active');
+  document.getElementById('loadingOverlay').classList.remove('active');
 }
 
 function showToast(title, message, type = 'success') {
@@ -1872,18 +2527,12 @@ function showToast(title, message, type = 'success') {
 }
 
 function setupScrollEffects() {
-  let lastScroll = 0;
-  
   window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
-    
-    if (currentScroll > 50) {
-      navbar.classList.add('scrolled');
+    if (window.pageYOffset > 50) {
+      document.getElementById('navbar').classList.add('scrolled');
     } else {
-      navbar.classList.remove('scrolled');
+      document.getElementById('navbar').classList.remove('scrolled');
     }
-    
-    lastScroll = currentScroll;
   });
 }
 </script>
