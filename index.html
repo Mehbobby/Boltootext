@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>BolToText — AI-Powered Audio & Video Transcription in Hindi, Hinglish & English</title>
+<title>BolToText — AI-Powered Transcription | Hindi, Hinglish & English</title>
 <meta name="description" content="Convert audio and video to text in seconds. Support for Hindi, Hinglish, and English. Fast, accurate, and affordable AI transcription.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,10 +14,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.umd.min.js"></script>
 <style>
 /* ============================================
-   MODERN BOLTOOTEXT UI - COMPLETE PREMIUM SAAS
+   BOLTOOTEXT - COMPLETE PREMIUM UI
    ============================================ */
 
-/* RESET & BASE */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -25,39 +24,32 @@
 }
 
 :root {
-  /* Color System */
   --bg-primary: #0A0A0F;
   --bg-secondary: #111118;
   --bg-tertiary: #1A1A24;
   --bg-card: #14141C;
   
-  /* Gradients */
   --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
   --gradient-secondary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --gradient-dark: linear-gradient(180deg, #0A0A0F 0%, #111118 100%);
   --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
   
-  /* Orange Accents */
   --orange-500: #FF6B35;
   --orange-600: #F7931E;
   --orange-glow: rgba(255, 107, 53, 0.25);
   --orange-dim: rgba(255, 107, 53, 0.1);
   
-  /* Text */
   --text-primary: #FFFFFF;
   --text-secondary: #A0A0AB;
   --text-tertiary: #6B6B78;
   
-  /* Borders */
   --border-color: rgba(255, 255, 255, 0.08);
   --border-color-hover: rgba(255, 255, 255, 0.15);
   
-  /* Status */
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;
   
-  /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -67,14 +59,12 @@
   --spacing-3xl: 64px;
   --spacing-4xl: 96px;
   
-  /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
   
-  /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -92,7 +82,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* SCROLLBAR */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -147,9 +136,6 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-weight: 800;
-  font-size: 24px;
-  letter-spacing: -0.02em;
   text-decoration: none;
   color: var(--text-primary);
   transition: transform 0.2s ease;
@@ -159,22 +145,9 @@ body {
   transform: scale(1.02);
 }
 
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  box-shadow: var(--shadow-glow);
-  animation: pulse-glow 3s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 16px var(--orange-glow); }
-  50% { box-shadow: 0 0 24px var(--orange-glow); }
+.navbar-logo img {
+  height: 40px;
+  width: auto;
 }
 
 .navbar-nav {
@@ -192,12 +165,11 @@ body {
 .nav-link {
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700; /* BOLD */
   color: var(--text-secondary);
   text-decoration: none;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
-  position: relative;
   cursor: pointer;
 }
 
@@ -210,7 +182,6 @@ body {
   color: var(--orange-500);
 }
 
-/* Mobile Menu */
 .mobile-menu-toggle {
   display: none;
   width: 40px;
@@ -233,7 +204,6 @@ body {
   transition: all 0.3s ease;
 }
 
-/* User Menu */
 .user-menu {
   position: relative;
 }
@@ -473,8 +443,6 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  position: relative;
-  display: inline-block;
 }
 
 .hero-subtitle {
@@ -505,7 +473,6 @@ body {
   }
 }
 
-/* Trust Badges */
 .trust-badges {
   display: flex;
   align-items: center;
@@ -624,20 +591,16 @@ body {
 }
 
 /* ============================================
-   SECTIONS
+   FREE TOOL SECTION (GUEST MODE)
    ============================================ */
 
-.section {
+.free-tool-section {
   padding: var(--spacing-4xl) var(--spacing-lg);
-  position: relative;
-}
-
-.section-alt {
   background: var(--bg-secondary);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -671,18 +634,302 @@ body {
 .section-subtitle {
   font-size: 18px;
   color: var(--text-secondary);
-  max-width: 700px;
+}
+
+.guest-limit-info {
+  text-align: center;
+  padding: var(--spacing-md);
+  background: var(--orange-dim);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.guest-limit-info strong {
+  color: var(--orange-500);
+  font-weight: 700;
+}
+
+/* Upload Area - Simple Style */
+.upload-area {
+  background: var(--bg-tertiary);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-3xl) var(--spacing-lg);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: var(--spacing-lg);
+}
+
+.upload-area:hover {
+  border-color: var(--orange-500);
+  background: rgba(255, 107, 53, 0.03);
+}
+
+.upload-area.dragover {
+  border-color: var(--orange-500);
+  background: rgba(255, 107, 53, 0.05);
+  border-style: solid;
+}
+
+.upload-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--spacing-md);
+  background: var(--gradient-primary);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: var(--shadow-glow);
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.upload-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.upload-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.upload-formats {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: var(--spacing-md);
+}
+
+/* Link Input */
+.link-input-container {
+  margin-bottom: var(--spacing-xl);
+}
+
+.link-input-wrapper {
+  display: flex;
+  gap: var(--spacing-sm);
+  max-width: 600px;
   margin: 0 auto;
 }
 
+.link-input {
+  flex: 1;
+  padding: 14px 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.link-input:focus {
+  outline: none;
+  border-color: var(--orange-500);
+  box-shadow: 0 0 0 3px var(--orange-dim);
+}
+
+.link-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Format Selection */
+.format-selector {
+  margin-bottom: var(--spacing-xl);
+}
+
+.format-label {
+  display: block;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.format-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-sm);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.format-option {
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.format-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color-hover);
+  transform: scale(1.02);
+}
+
+.format-option.active {
+  background: var(--orange-dim);
+  border-color: var(--orange-500);
+  box-shadow: 0 0 16px var(--orange-glow);
+}
+
+.format-emoji {
+  font-size: 28px;
+  display: block;
+  margin-bottom: var(--spacing-sm);
+}
+
+.format-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* File Preview */
+.file-preview {
+  background: var(--gradient-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: none;
+  margin-bottom: var(--spacing-lg);
+}
+
+.file-preview.show {
+  display: block;
+}
+
+.file-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.file-preview-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.file-preview-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.file-preview-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--orange-dim);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.file-preview-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.file-preview-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.file-preview-size {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+/* Transcript Output */
+.transcript-output {
+  display: none;
+  margin-top: var(--spacing-xl);
+  animation: fade-in-up 0.4s ease;
+}
+
+.transcript-output.show {
+  display: block;
+}
+
+.transcript-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.transcript-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.transcript-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.transcript-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  min-height: 300px;
+  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
 /* ============================================
-   FEATURES SECTION
+   SECTIONS
    ============================================ */
 
+.section {
+  padding: var(--spacing-4xl) var(--spacing-lg);
+}
+
+.section-alt {
+  background: var(--bg-secondary);
+}
+
+/* Features */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .feature-card {
@@ -692,6 +939,8 @@ body {
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .feature-card::before {
@@ -734,15 +983,12 @@ body {
   line-height: 1.7;
 }
 
-/* ============================================
-   PRICING SECTION
-   ============================================ */
-
+/* Pricing */
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-lg);
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -753,12 +999,14 @@ body {
   padding: var(--spacing-xl);
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .pricing-card.popular {
   border-color: var(--orange-500);
   box-shadow: 0 0 32px var(--orange-glow);
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .pricing-card.popular::before {
@@ -781,7 +1029,7 @@ body {
 }
 
 .pricing-card.popular:hover {
-  transform: scale(1.05) translateY(-4px);
+  transform: scale(1.02) translateY(-4px);
 }
 
 .pricing-name {
@@ -814,6 +1062,7 @@ body {
 .pricing-features {
   list-style: none;
   margin-bottom: var(--spacing-lg);
+  flex: 1;
 }
 
 .pricing-features li {
@@ -832,14 +1081,13 @@ body {
   flex-shrink: 0;
 }
 
-/* ============================================
-   TESTIMONIALS SECTION
-   ============================================ */
-
+/* Testimonials */
 .testimonials-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .testimonial-card {
@@ -899,10 +1147,7 @@ body {
   color: var(--text-tertiary);
 }
 
-/* ============================================
-   FAQ SECTION
-   ============================================ */
-
+/* FAQ */
 .faq-container {
   max-width: 800px;
   margin: 0 auto;
@@ -966,10 +1211,7 @@ body {
   max-height: 500px;
 }
 
-/* ============================================
-   CTA SECTION
-   ============================================ */
-
+/* CTA Section */
 .cta-section {
   background: var(--gradient-card);
   backdrop-filter: blur(20px);
@@ -1013,311 +1255,108 @@ body {
 }
 
 /* ============================================
-   DASHBOARD
+   FOOTER
    ============================================ */
 
-.dashboard {
-  max-width: 1400px;
+.footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  padding: var(--spacing-3xl) var(--spacing-lg) var(--spacing-lg);
+}
+
+.footer-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: calc(72px + var(--spacing-xl)) var(--spacing-lg) var(--spacing-3xl);
 }
 
-.dashboard-header {
-  margin-bottom: var(--spacing-2xl);
-}
-
-.dashboard-title {
-  font-size: clamp(28px, 5vw, 40px);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin-bottom: var(--spacing-sm);
-}
-
-.dashboard-subtitle {
-  font-size: 16px;
-  color: var(--text-secondary);
-}
-
-.dashboard-grid {
+.footer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-2xl);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-3xl);
 }
 
-/* ============================================
-   CARDS
-   ============================================ */
-
-.card {
-  background: var(--gradient-card);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-}
-
-.card:hover {
-  border-color: var(--border-color-hover);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-md);
-}
-
-.card-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-tertiary);
-}
-
-.card-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--orange-dim);
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-}
-
-/* Upload Card */
-.upload-card {
-  grid-column: 1 / -1;
-  background: var(--bg-tertiary);
-  border: 2px dashed var(--border-color);
-  padding: var(--spacing-2xl);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.upload-card:hover {
-  border-color: var(--orange-500);
-  background: rgba(255, 107, 53, 0.03);
-  transform: translateY(-2px);
-}
-
-.upload-card.dragover {
-  border-color: var(--orange-500);
-  background: rgba(255, 107, 53, 0.05);
-  border-style: solid;
-}
-
-.upload-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto var(--spacing-md);
-  background: var(--gradient-primary);
-  border-radius: var(--radius-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  box-shadow: var(--shadow-glow);
-  animation: bounce 2s ease-in-out infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.upload-title {
-  font-size: 20px;
+.footer-section h4 {
+  font-size: 14px;
   font-weight: 700;
-  margin-bottom: var(--spacing-sm);
-}
-
-.upload-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-lg);
-}
-
-.upload-formats {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-/* Format Options */
-.format-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-sm);
-}
-
-.format-option {
-  padding: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.format-option:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--border-color-hover);
-  transform: scale(1.02);
-}
-
-.format-option.active {
-  background: var(--orange-dim);
-  border-color: var(--orange-500);
-  box-shadow: 0 0 16px var(--orange-glow);
-}
-
-.format-emoji {
-  font-size: 28px;
-  display: block;
-  margin-bottom: var(--spacing-sm);
-}
-
-.format-name {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.format-desc {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-/* Usage Stats */
-.usage-bar-container {
-  margin: var(--spacing-md) 0;
-}
-
-.usage-label-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
-  font-size: 13px;
-}
-
-.usage-bar-bg {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.usage-bar-fill {
-  height: 100%;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-full);
-  transition: width 0.5s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.usage-bar-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: shimmer 2s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.usage-bar-fill.warning {
-  background: linear-gradient(90deg, var(--warning), var(--error));
-}
-
-.plan-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: 4px 12px;
-  background: var(--orange-dim);
-  border: 1px solid rgba(255, 107, 53, 0.2);
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+}
+
+.footer-links {
+  list-style: none;
+}
+
+.footer-links li {
+  margin-bottom: var(--spacing-sm);
+}
+
+.footer-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
   color: var(--orange-500);
 }
 
-/* ============================================
-   TRANSCRIPT OUTPUT
-   ============================================ */
-
-.transcript-container {
-  display: none;
-  margin-top: var(--spacing-xl);
-  animation: fade-in-up 0.4s ease;
+.social-links {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
 }
 
-.transcript-container.show {
-  display: block;
-}
-
-.transcript-header {
+.social-link {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.social-link:hover {
+  background: var(--orange-dim);
+  transform: translateY(-2px);
+}
+
+.footer-bottom {
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
   justify-content: space-between;
-  margin-bottom: var(--spacing-md);
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--spacing-md);
 }
 
-.transcript-title {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.transcript-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.transcript-box {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  min-height: 300px;
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+.footer-copyright {
   font-size: 14px;
-  line-height: 1.8;
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  max-height: 600px;
-  overflow-y: auto;
+  color: var(--text-tertiary);
+}
+
+.footer-legal {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.footer-legal a {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-legal a:hover {
+  color: var(--text-primary);
 }
 
 /* ============================================
@@ -1458,12 +1497,8 @@ body {
     padding: var(--spacing-3xl) var(--spacing-md);
   }
   
-  .dashboard {
-    padding: calc(64px + var(--spacing-lg)) var(--spacing-md) var(--spacing-2xl);
-  }
-  
-  .dashboard-grid {
-    grid-template-columns: 1fr;
+  .free-tool-section {
+    padding: var(--spacing-3xl) var(--spacing-md);
   }
   
   .features-grid,
@@ -1491,6 +1526,38 @@ body {
   .btn {
     width: 100%;
   }
+  
+  .link-input-wrapper {
+    flex-direction: column;
+  }
+  
+  .file-preview-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .upload-area {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+  
+  .trust-badges {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============================================
@@ -1512,13 +1579,13 @@ body {
 <nav class="navbar" id="navbar">
   <div class="navbar-container">
     <a href="#" class="navbar-logo" onclick="scrollToTop(); return false;">
-      <div class="logo-icon">🎙️</div>
-      <span>Bol<span style="color: var(--orange-500);">To</span>Text</span>
+      <!-- LOGO: Replace with your actual logo -->
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' fill='%23FF6B35' rx='8'/%3E%3Ctext x='60' y='25' text-anchor='middle' fill='white' font-family='Inter, sans-serif' font-size='16' font-weight='800'%3EBolToText%3C/text%3E%3C/svg%3E" alt="BolToText Logo">
     </a>
     
     <div class="navbar-nav">
       <ul class="nav-links">
-        <li><a href="#" class="nav-link" onclick="goToDashboard(); return false;">Dashboard</a></li>
+        <li><a href="#free-tool" class="nav-link">Try Free</a></li>
         <li><a href="#features" class="nav-link">Features</a></li>
         <li><a href="#pricing" class="nav-link">Pricing</a></li>
       </ul>
@@ -1529,10 +1596,13 @@ body {
         <span></span>
       </button>
       
-      <button class="btn btn-primary btn-sm" id="loginBtn" style="display: none;">
-        Sign In
-      </button>
+      <!-- Guest State -->
+      <div id="guestButtons">
+        <button class="btn btn-secondary btn-sm" onclick="handleSignup()" style="margin-right: 8px;">Sign Up</button>
+        <button class="btn btn-primary btn-sm" onclick="handleLogin()">Log In</button>
+      </div>
       
+      <!-- Logged In State -->
       <div class="user-menu" id="userMenu" style="display: none;">
         <div class="user-avatar" id="userAvatar">A</div>
         <div class="user-dropdown" id="userDropdown">
@@ -1547,9 +1617,6 @@ body {
             <div class="credits-subtext" id="dropdownPlan">Free Plan</div>
           </div>
           
-          <a href="#dashboard" class="dropdown-item" onclick="goToDashboard(); return false;">
-            <span>📊</span> Dashboard
-          </a>
           <a href="#pricing" class="dropdown-item">
             <span style="color: var(--orange-500)">⭐</span> Upgrade Plan
           </a>
@@ -1586,7 +1653,7 @@ body {
     </p>
     
     <div class="hero-cta">
-      <button class="btn btn-primary btn-lg" onclick="scrollToDashboard()">
+      <button class="btn btn-primary btn-lg" onclick="scrollToFreeTool()">
         <span>🚀</span> Start Transcribing Free
       </button>
       <a href="#pricing" class="btn btn-secondary btn-lg">
@@ -1615,8 +1682,121 @@ body {
   </div>
 </section>
 
+<!-- FREE TOOL SECTION (GUEST MODE - 3 FREE TRANSCRIPTIONS) -->
+<section class="free-tool-section" id="free-tool">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Try For Free</span>
+      <h2 class="section-title">Transcribe Files</h2>
+      <p class="section-subtitle">
+        Upload an audio or video file to transcribe now
+      </p>
+    </div>
+    
+    <div class="guest-limit-info" id="guestInfo">
+      <strong>3 Free Transcriptions</strong> • No signup required • Each up to 5 minutes
+    </div>
+    
+    <!-- Upload Area -->
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">📁</div>
+      <h3 class="upload-title">Drag & Drop</h3>
+      <p class="upload-subtitle">or click to browse your files</p>
+      <button class="btn btn-primary">
+        <span>📤</span> Browse Files
+      </button>
+      <p class="upload-formats">Supports: MP4, MOV, MP3, WAV, M4A, WEBM • Max 50MB</p>
+      
+      <input type="file" id="fileInput" accept="audio/*,video/*" style="display: none;">
+    </div>
+    
+    <!-- Link Input -->
+    <div class="link-input-container">
+      <div class="link-input-wrapper">
+        <input 
+          type="text" 
+          class="link-input" 
+          id="linkInput" 
+          placeholder="Or paste a YouTube/video link here..."
+        >
+        <button class="btn btn-primary" onclick="handleLinkUpload()">
+          <span>🔗</span> Upload
+        </button>
+      </div>
+    </div>
+    
+    <!-- Format Selection -->
+    <div class="format-selector">
+      <label class="format-label">Select Output Language</label>
+      <div class="format-options">
+        <div class="format-option active" data-format="hinglish">
+          <span class="format-emoji">🇮🇳</span>
+          <div class="format-name">Hinglish</div>
+        </div>
+        
+        <div class="format-option" data-format="hindi">
+          <span class="format-emoji">🪷</span>
+          <div class="format-name">Hindi</div>
+        </div>
+        
+        <div class="format-option" data-format="english">
+          <span class="format-emoji">🇬🇧</span>
+          <div class="format-name">English</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- File Preview -->
+    <div class="file-preview" id="filePreview">
+      <div class="file-preview-header">
+        <span class="file-preview-title">Selected File</span>
+        <button class="btn btn-ghost btn-sm" id="removeFile">
+          <span>🗑️</span> Remove
+        </button>
+      </div>
+      <div class="file-preview-content">
+        <div class="file-preview-icon">🎬</div>
+        <div class="file-preview-info">
+          <div class="file-preview-name" id="fileName">filename.mp4</div>
+          <div class="file-preview-size" id="fileSize">0 MB</div>
+        </div>
+        <button class="btn btn-primary btn-lg" id="transcribeBtn">
+          <span>✨</span> Transcribe Now
+        </button>
+      </div>
+    </div>
+    
+    <!-- Transcript Output -->
+    <div class="transcript-output" id="transcriptOutput">
+      <div class="transcript-header">
+        <h3 class="transcript-title">Your Transcript</h3>
+        <div class="transcript-actions">
+          <button class="btn btn-ghost btn-sm" id="copyBtn">
+            <span>📋</span> Copy
+          </button>
+          <button class="btn btn-ghost btn-sm" id="downloadTxt">
+            <span>💾</span> TXT
+          </button>
+          <button class="btn btn-ghost btn-sm" id="downloadSrt">
+            <span>🎬</span> SRT
+          </button>
+          <button class="btn btn-ghost btn-sm" id="downloadPdf">
+            <span>📄</span> PDF
+          </button>
+          <button class="btn btn-ghost btn-sm" id="downloadDocx">
+            <span>📝</span> DOCX
+          </button>
+        </div>
+      </div>
+      <div class="transcript-box" id="transcriptBox">
+        Your transcribed text will appear here...
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FEATURES SECTION -->
-<section class="section section-alt" id="features">
+<section class="section" id="features">
   <div class="container">
     <div class="section-header">
       <span class="section-badge">Features</span>
@@ -1679,7 +1859,7 @@ body {
 </section>
 
 <!-- PRICING SECTION -->
-<section class="section" id="pricing">
+<section class="section section-alt" id="pricing">
   <div class="container">
     <div class="section-header">
       <span class="section-badge">Pricing</span>
@@ -1703,7 +1883,7 @@ body {
           <li>Basic support</li>
         </ul>
         
-        <button class="btn btn-secondary" style="width: 100%;" onclick="handlePricing('free')">
+        <button class="btn btn-secondary" style="width: 100%;" onclick="handleSignup()">
           Get Started Free
         </button>
       </div>
@@ -1722,7 +1902,7 @@ body {
           <li>No watermarks</li>
         </ul>
         
-        <button class="btn btn-primary" style="width: 100%;" onclick="handlePricing('starter')">
+        <button class="btn btn-primary" style="width: 100%;" onclick="handleUpgrade('starter')">
           Upgrade Now
         </button>
       </div>
@@ -1741,7 +1921,7 @@ body {
           <li>API access (coming soon)</li>
         </ul>
         
-        <button class="btn btn-secondary" style="width: 100%;" onclick="handlePricing('pro')">
+        <button class="btn btn-secondary" style="width: 100%;" onclick="handleUpgrade('pro')">
           Go Pro
         </button>
       </div>
@@ -1750,7 +1930,7 @@ body {
 </section>
 
 <!-- TESTIMONIALS SECTION -->
-<section class="section section-alt" id="testimonials">
+<section class="section" id="testimonials">
   <div class="container">
     <div class="section-header">
       <span class="section-badge">Testimonials</span>
@@ -1807,7 +1987,7 @@ body {
 </section>
 
 <!-- FAQ SECTION -->
-<section class="section" id="faq">
+<section class="section section-alt" id="faq">
   <div class="container">
     <div class="section-header">
       <span class="section-badge">FAQ</span>
@@ -1844,18 +2024,6 @@ body {
       
       <div class="faq-item">
         <button class="faq-question" onclick="toggleFAQ(this)">
-          <span>What's the difference between Fast and Accurate modes?</span>
-          <span class="faq-icon">+</span>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-content">
-            Fast Mode processes in seconds and is great for quick drafts. Accurate Mode takes slightly longer but provides higher accuracy and better punctuation.
-          </div>
-        </div>
-      </div>
-      
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFAQ(this)">
           <span>Is my data secure?</span>
           <span class="faq-icon">+</span>
         </button>
@@ -1868,24 +2036,24 @@ body {
       
       <div class="faq-item">
         <button class="faq-question" onclick="toggleFAQ(this)">
-          <span>Can I cancel my subscription anytime?</span>
+          <span>Can I try it for free?</span>
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-answer">
           <div class="faq-answer-content">
-            Yes! You can upgrade, downgrade, or cancel your subscription at any time. No questions asked, no hidden fees.
+            Yes! You can transcribe 3 files for free without signing up. Each file can be up to 5 minutes long. After that, create a free account for 10 minutes per month.
           </div>
         </div>
       </div>
       
       <div class="faq-item">
         <button class="faq-question" onclick="toggleFAQ(this)">
-          <span>Do unused minutes roll over?</span>
+          <span>Can I cancel my subscription anytime?</span>
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-answer">
           <div class="faq-answer-content">
-            Free plan minutes reset monthly. Paid plan minutes do not roll over, but you can always upgrade to Pro for unlimited transcription.
+            Yes! You can upgrade, downgrade, or cancel your subscription at any time. No questions asked, no hidden fees.
           </div>
         </div>
       </div>
@@ -1903,7 +2071,7 @@ body {
           Join thousands of creators who trust BolToText for their transcription needs
         </p>
         <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap;">
-          <button class="btn btn-primary btn-lg" onclick="scrollToDashboard()">
+          <button class="btn btn-primary btn-lg" onclick="scrollToFreeTool()">
             <span>🚀</span> Start Free Trial
           </button>
           <a href="#pricing" class="btn btn-secondary btn-lg">
@@ -1915,146 +2083,63 @@ body {
   </div>
 </section>
 
-<!-- DASHBOARD -->
-<section class="dashboard" id="dashboardSection" style="display: none;">
-  <div class="dashboard-header">
-    <h2 class="dashboard-title">Your Workspace</h2>
-    <p class="dashboard-subtitle">Upload your audio or video file and get instant transcription</p>
-  </div>
-  
-  <div class="card" id="usageCard" style="display: none; margin-bottom: var(--spacing-lg);">
-    <div class="card-header">
-      <span class="card-title">Usage This Month</span>
-      <span class="plan-badge" id="planBadge">
-        <span>⚡</span> Free Plan
-      </span>
-    </div>
-    
-    <div class="usage-bar-container">
-      <div class="usage-label-row">
-        <span style="font-weight: 600;" id="usageText">0 / 10 minutes</span>
-        <span style="color: var(--text-tertiary);" id="usagePercent">0%</span>
-      </div>
-      <div class="usage-bar-bg">
-        <div class="usage-bar-fill" id="usageBar" style="width: 0%"></div>
-      </div>
-    </div>
-    
-    <div style="margin-top: var(--spacing-md); font-size: 12px; color: var(--text-tertiary);">
-      <span id="usageFooter">Get unlimited minutes with Pro plan</span>
-    </div>
-  </div>
-  
-  <div class="dashboard-grid">
-    <div class="upload-card" id="uploadZone">
-      <div class="upload-icon">📁</div>
-      <h3 class="upload-title">Drop your file here</h3>
-      <p class="upload-subtitle">or click to browse your files</p>
-      <button class="btn btn-primary" style="margin: var(--spacing-md) 0;">
-        <span>📤</span> Choose File
-      </button>
-      <p class="upload-formats">Supports: MP4, MOV, MP3, WAV, M4A, WEBM (Max 50MB)</p>
-      
-      <input type="file" id="fileInput" accept="audio/*,video/*" style="display: none;">
-    </div>
-    
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Output Format</span>
-        <span class="card-icon">🌐</span>
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-grid">
+      <div class="footer-section">
+        <h4>Product</h4>
+        <ul class="footer-links">
+          <li><a href="#free-tool">Try Free</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
       </div>
       
-      <div class="format-grid">
-        <div class="format-option active" data-format="hinglish">
-          <span class="format-emoji">🇮🇳</span>
-          <div class="format-name">Hinglish</div>
-          <div class="format-desc">Mixed Hindi-English</div>
-        </div>
-        
-        <div class="format-option" data-format="hindi">
-          <span class="format-emoji">🪷</span>
-          <div class="format-name">Hindi</div>
-          <div class="format-desc">Pure Devanagari</div>
-        </div>
-        
-        <div class="format-option" data-format="english">
-          <span class="format-emoji">🇬🇧</span>
-          <div class="format-name">English</div>
-          <div class="format-desc">Full Translation</div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Processing Mode</span>
-        <span class="card-icon">⚡</span>
+      <div class="footer-section">
+        <h4>Company</h4>
+        <ul class="footer-links">
+          <li><a href="#about">About Us</a></li>
+          <li><a href="#blog">Blog</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="#careers">Careers</a></li>
+        </ul>
       </div>
       
-      <div class="format-grid">
-        <div class="format-option active" data-speed="fast">
-          <span class="format-emoji">🚀</span>
-          <div class="format-name">Fast</div>
-          <div class="format-desc">Quick results</div>
-        </div>
-        
-        <div class="format-option" data-speed="accurate">
-          <span class="format-emoji">🎯</span>
-          <div class="format-name">Accurate</div>
-          <div class="format-desc">Best quality</div>
+      <div class="footer-section">
+        <h4>Resources</h4>
+        <ul class="footer-links">
+          <li><a href="#help">Help Center</a></li>
+          <li><a href="#docs">Documentation</a></li>
+          <li><a href="#api">API</a></li>
+          <li><a href="#status">Status</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Follow Us</h4>
+        <div class="social-links">
+          <a href="https://twitter.com" class="social-link" target="_blank" rel="noopener">𝕏</a>
+          <a href="https://linkedin.com" class="social-link" target="_blank" rel="noopener">in</a>
+          <a href="https://instagram.com" class="social-link" target="_blank" rel="noopener">📷</a>
+          <a href="https://youtube.com" class="social-link" target="_blank" rel="noopener">▶️</a>
         </div>
       </div>
-    </div>
-  </div>
-  
-  <div class="card" id="filePreview" style="display: none; margin-top: var(--spacing-lg);">
-    <div class="card-header">
-      <span class="card-title">Selected File</span>
-      <button class="btn btn-ghost btn-sm" id="removeFile">
-        <span>🗑️</span> Remove
-      </button>
     </div>
     
-    <div style="display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap;">
-      <div style="width: 48px; height: 48px; background: var(--orange-dim); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 24px;">
-        🎬
+    <div class="footer-bottom">
+      <div class="footer-copyright">
+        © 2024 BolToText. All rights reserved.
       </div>
-      <div style="flex: 1; min-width: 200px;">
-        <div style="font-weight: 600; margin-bottom: 4px;" id="fileName">filename.mp4</div>
-        <div style="font-size: 13px; color: var(--text-tertiary);" id="fileSize">0 MB</div>
+      <div class="footer-legal">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms of Service</a>
+        <a href="#cookies">Cookies</a>
       </div>
-      <button class="btn btn-primary btn-lg" id="transcribeBtn">
-        <span>✨</span> Transcribe Now
-      </button>
     </div>
   </div>
-  
-  <div class="transcript-container" id="transcriptContainer">
-    <div class="transcript-header">
-      <h3 class="transcript-title">Your Transcript</h3>
-      <div class="transcript-actions">
-        <button class="btn btn-ghost btn-sm" id="copyBtn">
-          <span>📋</span> Copy
-        </button>
-        <button class="btn btn-ghost btn-sm" id="downloadTxt">
-          <span>💾</span> TXT
-        </button>
-        <button class="btn btn-ghost btn-sm" id="downloadSrt">
-          <span>🎬</span> SRT
-        </button>
-        <button class="btn btn-ghost btn-sm" id="downloadPdf">
-          <span>📄</span> PDF
-        </button>
-        <button class="btn btn-ghost btn-sm" id="downloadDocx">
-          <span>📝</span> DOCX
-        </button>
-      </div>
-    </div>
-    <div class="transcript-box" id="transcriptBox">
-      Your transcribed text will appear here...
-    </div>
-  </div>
-</section>
+</footer>
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-content">
@@ -2087,8 +2172,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let selectedFile = null;
 let selectedFormat = 'hinglish';
-let selectedSpeed = 'fast';
 let transcriptData = null;
+let guestTranscriptionCount = parseInt(localStorage.getItem('boltootext_guest_count') || '0');
 
 // ============================================
 // INIT
@@ -2097,6 +2182,7 @@ window.addEventListener('load', async () => {
   await checkAuth();
   setupEventListeners();
   setupScrollEffects();
+  updateGuestInfo();
 });
 
 async function checkAuth() {
@@ -2112,59 +2198,46 @@ async function checkAuth() {
 }
 
 function showLoggedOutState() {
-  document.getElementById('heroSection').style.display = 'flex';
-  document.getElementById('dashboardSection').style.display = 'none';
-  document.getElementById('loginBtn').style.display = 'inline-flex';
+  document.getElementById('guestButtons').style.display = 'flex';
   document.getElementById('userMenu').style.display = 'none';
 }
 
 function showLoggedInState() {
-  document.getElementById('loginBtn').style.display = 'none';
+  document.getElementById('guestButtons').style.display = 'none';
   document.getElementById('userMenu').style.display = 'block';
 }
 
-function scrollToDashboard() {
-  if (!currentUser) {
-    login();
-  } else {
-    document.getElementById('heroSection').style.display = 'none';
-    document.getElementById('dashboardSection').style.display = 'block';
-    document.getElementById('usageCard').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-}
-
-function goToDashboard() {
-  if (currentUser) {
-    scrollToDashboard();
-  } else {
-    login();
-  }
+function updateGuestInfo() {
+  const remaining = Math.max(0, 3 - guestTranscriptionCount);
+  document.getElementById('guestInfo').innerHTML = `
+    <strong>${remaining}/3 Free Transcriptions Remaining</strong> • No signup required • Each up to 5 minutes
+  `;
 }
 
 function scrollToTop() {
-  if (currentUser) {
-    document.getElementById('heroSection').style.display = 'none';
-    document.getElementById('dashboardSection').style.display = 'block';
-  } else {
-    document.getElementById('heroSection').style.display = 'flex';
-    document.getElementById('dashboardSection').style.display = 'none';
-  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scrollToFreeTool() {
+  document.getElementById('free-tool').scrollIntoView({ behavior: 'smooth' });
 }
 
 // ============================================
 // AUTH
 // ============================================
-async function login() {
+async function handleLogin() {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin
+      redirectTo: `${window.location.origin}/`
     }
   });
   
   if (error) showToast('Login failed', error.message, 'error');
+}
+
+async function handleSignup() {
+  handleLogin(); // Same as login for OAuth
 }
 
 async function logout() {
@@ -2212,19 +2285,9 @@ function updateUsageUI(userData) {
   const limit = userData.plan_limit || 600;
   const usedMin = Math.floor(used / 60);
   const limitMin = Math.floor(limit / 60);
-  const percent = Math.min((used / limit) * 100, 100);
-  
-  document.getElementById('usageText').textContent = `${usedMin} / ${limitMin} minutes`;
-  document.getElementById('usagePercent').textContent = `${Math.round(percent)}%`;
-  document.getElementById('usageBar').style.width = `${percent}%`;
-  
-  if (percent > 90) {
-    document.getElementById('usageBar').classList.add('warning');
-  }
   
   document.getElementById('dropdownCredits').textContent = `${usedMin} / ${limitMin}`;
   document.getElementById('dropdownPlan').textContent = userData.plan_name || 'Free Plan';
-  document.getElementById('planBadge').innerHTML = `<span>⚡</span> ${userData.plan_name || 'Free Plan'}`;
 }
 
 // ============================================
@@ -2242,52 +2305,43 @@ function setupEventListeners() {
   });
   
   document.getElementById('logoutBtn').addEventListener('click', logout);
-  document.getElementById('loginBtn').addEventListener('click', login);
   
-  const uploadZone = document.getElementById('uploadZone');
+  const uploadArea = document.getElementById('uploadArea');
   const fileInput = document.getElementById('fileInput');
   
-  uploadZone.addEventListener('click', () => fileInput.click());
+  uploadArea.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', handleFileSelect);
   
-  uploadZone.addEventListener('dragover', (e) => {
+  uploadArea.addEventListener('dragover', (e) => {
     e.preventDefault();
-    uploadZone.classList.add('dragover');
+    uploadArea.classList.add('dragover');
   });
   
-  uploadZone.addEventListener('dragleave', () => {
-    uploadZone.classList.remove('dragover');
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
   });
   
-  uploadZone.addEventListener('drop', (e) => {
+  uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
-    uploadZone.classList.remove('dragover');
+    uploadArea.classList.remove('dragover');
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       handleFile(files[0]);
     }
   });
   
-  document.querySelectorAll('.format-option[data-format]').forEach(option => {
+  document.querySelectorAll('.format-option').forEach(option => {
     option.addEventListener('click', () => {
-      document.querySelectorAll('.format-option[data-format]').forEach(o => o.classList.remove('active'));
+      document.querySelectorAll('.format-option').forEach(o => o.classList.remove('active'));
       option.classList.add('active');
       selectedFormat = option.dataset.format;
-    });
-  });
-  
-  document.querySelectorAll('.format-option[data-speed]').forEach(option => {
-    option.addEventListener('click', () => {
-      document.querySelectorAll('.format-option[data-speed]').forEach(o => o.classList.remove('active'));
-      option.classList.add('active');
-      selectedSpeed = option.dataset.speed;
     });
   });
   
   document.getElementById('removeFile').addEventListener('click', () => {
     selectedFile = null;
     fileInput.value = '';
-    document.getElementById('filePreview').style.display = 'none';
+    document.getElementById('filePreview').classList.remove('show');
   });
   
   document.getElementById('transcribeBtn').addEventListener('click', transcribeFile);
@@ -2315,7 +2369,19 @@ function handleFile(file) {
   selectedFile = file;
   document.getElementById('fileName').textContent = file.name;
   document.getElementById('fileSize').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
-  document.getElementById('filePreview').style.display = 'block';
+  document.getElementById('filePreview').classList.add('show');
+}
+
+function handleLinkUpload() {
+  const link = document.getElementById('linkInput').value.trim();
+  if (!link) {
+    showToast('Error', 'Please enter a valid link', 'error');
+    return;
+  }
+  
+  // Simulate file upload from link
+  showToast('Processing', 'Downloading file from link...', 'success');
+  // Actual implementation would use backend endpoint
 }
 
 // ============================================
@@ -2324,27 +2390,32 @@ function handleFile(file) {
 async function transcribeFile() {
   if (!selectedFile) return;
   
-  const { data: session } = await sb.auth.getSession();
-  const token = session?.session?.access_token;
-  
-  if (!token) {
-    showToast('Authentication required', 'Please login to continue', 'error');
+  // Check guest limit
+  if (!currentUser && guestTranscriptionCount >= 3) {
+    showToast('Limit Reached', 'Please sign up to continue transcribing', 'error');
+    setTimeout(() => handleSignup(), 2000);
     return;
   }
+  
+  const { data: session } = await sb.auth.getSession();
+  const token = session?.session?.access_token;
   
   const formData = new FormData();
   formData.append('file', selectedFile);
   formData.append('output_format', selectedFormat);
-  formData.append('mode', selectedSpeed);
+  formData.append('mode', 'fast');
   
   showLoading('Transcribing your file...');
   
   try {
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(`${BACKEND_URL}/transcribe`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
+      headers: headers,
       body: formData
     });
     
@@ -2354,7 +2425,14 @@ async function transcribeFile() {
       transcriptData = data;
       displayTranscript(data.transcript);
       showToast('Success', 'Transcription completed!', 'success');
-      await loadUserData();
+      
+      if (!currentUser) {
+        guestTranscriptionCount++;
+        localStorage.setItem('boltootext_guest_count', guestTranscriptionCount.toString());
+        updateGuestInfo();
+      } else {
+        await loadUserData();
+      }
     } else {
       throw new Error(data.error || 'Transcription failed');
     }
@@ -2367,8 +2445,8 @@ async function transcribeFile() {
 
 function displayTranscript(text) {
   document.getElementById('transcriptBox').textContent = text;
-  document.getElementById('transcriptContainer').classList.add('show');
-  document.getElementById('transcriptContainer').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('transcriptOutput').classList.add('show');
+  document.getElementById('transcriptOutput').scrollIntoView({ behavior: 'smooth' });
 }
 
 // ============================================
@@ -2453,39 +2531,31 @@ function downloadDOCX(text, filename) {
 // ============================================
 // PRICING
 // ============================================
-function handlePricing(plan) {
-  if (plan === 'free') {
-    if (currentUser) {
-      showToast('Already on Free', 'You are already on the free plan', 'success');
-    } else {
-      login();
-    }
-  } else {
-    if (!currentUser) {
-      login();
-      return;
-    }
-    
-    const prices = {
-      starter: 9900,
-      pro: 29900
-    };
-    
-    const options = {
-      key: 'rzp_test_SZqFaH7NOAMrJX',
-      amount: prices[plan],
-      currency: 'INR',
-      name: 'BolToText',
-      description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
-      handler: async function(response) {
-        showToast('Payment Successful', 'Your plan has been upgraded!', 'success');
-        await loadUserData();
-      }
-    };
-    
-    const rzp = new Razorpay(options);
-    rzp.open();
+function handleUpgrade(plan) {
+  if (!currentUser) {
+    handleSignup();
+    return;
   }
+  
+  const prices = {
+    starter: 9900,
+    pro: 29900
+  };
+  
+  const options = {
+    key: 'rzp_test_SZqFaH7NOAMrJX',
+    amount: prices[plan],
+    currency: 'INR',
+    name: 'BolToText',
+    description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+    handler: async function(response) {
+      showToast('Payment Successful', 'Your plan has been upgraded!', 'success');
+      await loadUserData();
+    }
+  };
+  
+  const rzp = new Razorpay(options);
+  rzp.open();
 }
 
 // ============================================
