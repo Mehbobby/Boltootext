@@ -10,6 +10,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 GROQ_API_KEY         = os.environ.get("GROQ_API_KEY")
 SUPABASE_URL         = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 RAZORPAY_KEY_ID      = os.environ.get("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET  = os.environ.get("RAZORPAY_KEY_SECRET")
 
