@@ -168,6 +168,12 @@ def format_srt_time(seconds: float) -> str:
 
 @app.post("/export/pdf")
 async def export_pdf(data: dict):
+    @app.get("/debug")
+async def debug_info():
+    return {
+        "groq_key_exists": bool(GROQ_API_KEY),
+        "groq_key_length": len(GROQ_API_KEY) if GROQ_API_KEY else 0
+    }
     """Export transcription as PDF"""
     try:
         text = data.get("converted_text") or data.get("text", "")
