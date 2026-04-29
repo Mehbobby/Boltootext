@@ -37,18 +37,58 @@ def convert_to_format(text: str, target_format: str) -> str:
         prompt = f"Translate the following Hindi text to English. Only output the translation, no explanations:\n\n{text}"
     else:
         return text
-
-    response = groq_client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model="llama-3.3-70b-versatile",
-        temperature=0.3,
-        max_tokens=4000
-    )
-    
-    return response.choices[0].message.content.strip()
-
 @app.post("/transcribe")
 async def transcribe_file(
+    file: UploadFile = File(...),
+    language: str = Form("hindi"),
+    mode: str = Form("fast")
+):
+    """Transcribe uploaded audio/video file"""
+    import traceback
+    
+    try:
+        print(f"[DEBUG] Starting transcription - Language: {language}, Mode: {mode}")
+        print(f"[DEBUG] File: {file.filename}, Content-Type: {file.content_type}")
+        
+        # Save uploaded file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+            content = await file.read()
+            tmp.write(content)
+            tmp_path = tmp.name
+        
+        print(f"[DEBUG] Saved to: {tmp_path}")
+
+        # Choose model based on mode
+        model = "whisper-large-v3" if mode == "accurate" else "whisper-large-v3-turbo"
+        print(f"[DEBUG] Using model: {model}")
+
+        # Transcribe
+        print(f"[DEBUG] Calling transcribe_audio...")
+        result = transcribe_audio(tmp_path, model)
+        print(f"[DEBUG] Transcription complete")
+        
+        # Clean up
+        os.unlink(tmp_path)
+
+        # Convert format if needed
+        original_text = result.text
+        if language != "hindi":
+            converted_text = convert_to_format(original_text, language)
+        else:
+            converted_text = original_text
+
+        return {
+            "text": original_text,
+            "converted_text": converted_text,
+            "language": language,
+            "segments": [{"start": s.start, "end": s.end, "text": s.text} for s in result.segments] if hasattr(result, 'segments') else []
+        }
+
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        print(f"[ERROR] Transcription failed: {str(e)}")
+        print(f"[ERROR] Traceback:\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")async def transcribe_file(
     file: UploadFile = File(...),
     language: str = Form("hindi"),
     mode: str = Form("fast")
