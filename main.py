@@ -4,6 +4,7 @@ from fastapi.responses import Response
 import tempfile
 import os
 import subprocess
+import traceback
 from groq import Groq
 from fpdf import FPDF
 
@@ -37,6 +38,16 @@ def convert_to_format(text: str, target_format: str) -> str:
         prompt = f"Translate the following Hindi text to English. Only output the translation, no explanations:\n\n{text}"
     else:
         return text
+
+    response = groq_client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="llama-3.3-70b-versatile",
+        temperature=0.3,
+        max_tokens=4000
+    )
+    
+    return response.choices[0].message.content.strip()
+
 @app.post("/transcribe")
 async def transcribe_file(
     file: UploadFile = File(...),
@@ -44,8 +55,6 @@ async def transcribe_file(
     mode: str = Form("fast")
 ):
     """Transcribe uploaded audio/video file"""
-    import traceback
-    
     try:
         print(f"[DEBUG] Starting transcription - Language: {language}, Mode: {mode}")
         print(f"[DEBUG] File: {file.filename}, Content-Type: {file.content_type}")
@@ -73,6 +82,7 @@ async def transcribe_file(
         # Convert format if needed
         original_text = result.text
         if language != "hindi":
+            print(f"[DEBUG] Converting to {language}...")
             converted_text = convert_to_format(original_text, language)
         else:
             converted_text = original_text
@@ -88,44 +98,7 @@ async def transcribe_file(
         error_trace = traceback.format_exc()
         print(f"[ERROR] Transcription failed: {str(e)}")
         print(f"[ERROR] Traceback:\n{error_trace}")
-        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")async def transcribe_file(
-    file: UploadFile = File(...),
-    language: str = Form("hindi"),
-    mode: str = Form("fast")
-):
-    """Transcribe uploaded audio/video file"""
-    try:
-        # Save uploaded file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
-            content = await file.read()
-            tmp.write(content)
-            tmp_path = tmp.name
-
-        # Choose model based on mode
-        model = "whisper-large-v3" if mode == "accurate" else "whisper-large-v3-turbo"
-
-        # Transcribe
-        result = transcribe_audio(tmp_path, model)
-        
-        # Clean up
-        os.unlink(tmp_path)
-
-        # Convert format if needed
-        original_text = result.text
-        if language != "hindi":
-            converted_text = convert_to_format(original_text, language)
-        else:
-            converted_text = original_text
-
-        return {
-            "text": original_text,
-            "converted_text": converted_text,
-            "language": language,
-            "segments": [{"start": s.start, "end": s.end, "text": s.text} for s in result.segments] if hasattr(result, 'segments') else []
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
 @app.post("/transcribe-url")
 async def transcribe_url(request: dict):
@@ -138,10 +111,13 @@ async def transcribe_url(request: dict):
         if not url:
             raise HTTPException(status_code=400, detail="URL required")
 
+        print(f"[DEBUG] Starting URL transcription - URL: {url}")
+
         # Download audio using yt-dlp
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = os.path.join(temp_dir, "audio.mp3")
             
+            print(f"[DEBUG] Downloading audio...")
             subprocess.run([
                 "yt-dlp",
                 "-x",
@@ -151,15 +127,20 @@ async def transcribe_url(request: dict):
                 url
             ], check=True, capture_output=True)
 
+            print(f"[DEBUG] Download complete")
+
             # Choose model
             model = "whisper-large-v3" if mode == "accurate" else "whisper-large-v3-turbo"
 
             # Transcribe
+            print(f"[DEBUG] Transcribing...")
             result = transcribe_audio(output_path, model)
+            print(f"[DEBUG] Transcription complete")
 
         # Convert format
         original_text = result.text
         if language != "hindi":
+            print(f"[DEBUG] Converting to {language}...")
             converted_text = convert_to_format(original_text, language)
         else:
             converted_text = original_text
@@ -172,8 +153,12 @@ async def transcribe_url(request: dict):
         }
 
     except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Download failed: {e.stderr}")
         raise HTTPException(status_code=400, detail="Failed to download video")
     except Exception as e:
+        error_trace = traceback.format_exc()
+        print(f"[ERROR] URL transcription failed: {str(e)}")
+        print(f"[ERROR] Traceback:\n{error_trace}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/export/srt")
@@ -208,12 +193,6 @@ def format_srt_time(seconds: float) -> str:
 
 @app.post("/export/pdf")
 async def export_pdf(data: dict):
-    @app.get("/debug")
-async def debug_info():
-    return {
-        "groq_key_exists": bool(GROQ_API_KEY),
-        "groq_key_length": len(GROQ_API_KEY) if GROQ_API_KEY else 0
-    }
     """Export transcription as PDF"""
     try:
         text = data.get("converted_text") or data.get("text", "")
@@ -235,6 +214,15 @@ async def debug_info():
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/debug")
+async def debug_info():
+    """Debug endpoint to check configuration"""
+    return {
+        "status": "ok",
+        "groq_key_exists": bool(GROQ_API_KEY),
+        "groq_key_length": len(GROQ_API_KEY) if GROQ_API_KEY else 0
+    }
 
 @app.get("/")
 async def root():
