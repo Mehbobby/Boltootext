@@ -1,138 +1,195 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Header
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+import tempfile, os, subprocess, re
 from fastapi.middleware.cors import CORSMiddleware
-import httpx, os, razorpay
-from supabase import create_client, Client
+import httpx, os, hashlib
 from datetime import datetime, timedelta, timezone
+from groq import Groq
+from fpdf import FPDF
+from fastapi.responses import Response
 
 app = FastAPI()
+
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-GROQ_API_KEY         = os.environ.get("GROQ_API_KEY")
-SUPABASE_URL         = os.environ.get("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
-SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
-RAZORPAY_KEY_ID      = os.environ.get("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET  = os.environ.get("RAZORPAY_KEY_SECRET")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-rz = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+# Initialize Groq client
+groq_client = Groq(api_key=GROQ_API_KEY)
 
-PLAN_LIMITS = {"free": 10*60, "starter": 120*60, "pro": 99999*60}
-PLAN_PRICES = {"starter": 9900, "pro": 29900}
+def transcribe_audio(audio_path: str, model: str = "whisper-large-v3"):
+    """Transcribe audio using Groq Whisper"""
+    with open(audio_path, "rb") as audio_file:
+        response = groq_client.audio.transcriptions.create(
+            file=audio_file,
+            model=model,
+            response_format="verbose_json",
+            language="hi"
+        )
+    return response
 
-def cur_month(): return datetime.now().strftime("%Y-%m")
+def convert_to_format(text: str, target_format: str) -> str:
+    """Convert text to Hindi/Hinglish/English using Groq LLaMA"""
+    if target_format == "hindi":
+        prompt = f"Convert the following text to pure Hindi (Devanagari script). Only output the converted text, no explanations:\n\n{text}"
+    elif target_format == "hinglish":
+        prompt = f"Convert the following text to Hinglish (Hindi words in Roman/English script). Only output the converted text, no explanations:\n\n{text}"
+    elif target_format == "english":
+        prompt = f"Translate the following Hindi text to English. Only output the translation, no explanations:\n\n{text}"
+    else:
+        return text
 
-def get_user(token):
-    try: return supabase.auth.get_user(token).user
-    except: raise HTTPException(401, "Login karo pehle!")
-
-def get_plan(uid):
-    try:
-        r = supabase.table("subscriptions").select("plan,valid_until").eq("user_id", uid).single().execute()
-        if r.data:
-            v = r.data.get("valid_until")
-            if v and datetime.fromisoformat(v.replace("Z","+00:00")) < datetime.now(timezone.utc):
-                return "free"
-            return r.data["plan"]
-    except: pass
-    return "free"
-
-def get_usage(uid):
-    try:
-        r = supabase.table("usage").select("seconds_used").eq("user_id", uid).eq("month_year", cur_month()).single().execute()
-        return r.data["seconds_used"] if r.data else 0
-    except: return 0
-
-def add_usage(uid, secs):
-    m = cur_month()
-    try:
-        ex = supabase.table("usage").select("id,seconds_used").eq("user_id", uid).eq("month_year", m).single().execute()
-        if ex.data:
-            supabase.table("usage").update({"seconds_used": ex.data["seconds_used"]+secs, "updated_at": datetime.now().isoformat()}).eq("id", ex.data["id"]).execute()
-        else:
-            supabase.table("usage").insert({"user_id": uid, "seconds_used": secs, "month_year": m}).execute()
-    except Exception as e: print(f"Usage err: {e}")
-
-
-@app.get("/")
-def root(): return {"status": "BolToText API running"}
-
-@app.get("/me")
-async def me(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Token nahi mila")
-    user = get_user(authorization.split(" ")[1])
-    uid  = str(user.id)
-    plan = get_plan(uid); used = get_usage(uid); limit = PLAN_LIMITS[plan]
-    return {"email": user.email, "plan": plan, "usage_seconds": used, "limit_seconds": limit, "remaining_seconds": max(0, limit-used)}
+    response = groq_client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="llama-3.3-70b-versatile",
+        temperature=0.3,
+        max_tokens=4000
+    )
+    
+    return response.choices[0].message.content.strip()
 
 @app.post("/transcribe")
-async def transcribe(
+async def transcribe_file(
     file: UploadFile = File(...),
-    model: str = Form("whisper-large-v3-turbo"),
-    language: str = Form(""),
-    authorization: str = Header(None),
+    language: str = Form("hindi"),
+    mode: str = Form("fast")
 ):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Login karo pehle!")
-    user = get_user(authorization.split(" ")[1])
-    uid  = str(user.id)
-    plan = get_plan(uid); used = get_usage(uid); limit = PLAN_LIMITS[plan]
-    if used >= limit:
-        raise HTTPException(429, f"LIMIT_EXCEEDED|{plan}|{used}|{limit}")
-    fb = await file.read()
-    if len(fb) > 25*1024*1024:
-        raise HTTPException(413, "25MB se badi file nahi chalegi!")
-    fd = {"model": model, "response_format": "verbose_json"}
-    if language: fd["language"] = language
+    """Transcribe uploaded audio/video file"""
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(
-                "https://api.groq.com/openai/v1/audio/transcriptions",
-                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-                files={"file": (file.filename, fb, file.content_type or "audio/mpeg")},
-                data=fd,
-            )
-        if resp.status_code != 200:
-            err = resp.json().get("error", {})
-            raise HTTPException(resp.status_code, err.get("message", "Groq error"))
-        data = resp.json()
-        dur  = int(data.get("duration", 0)) + 1
-        add_usage(uid, dur)
-        new_used = used + dur
-        return {**data, "usage": {"used": new_used, "limit": limit, "plan": plan, "remaining": max(0, limit-new_used)}}
-    except httpx.TimeoutException:
-        raise HTTPException(504, "Timeout! Dobara try karo.")
+        # Save uploaded file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+            content = await file.read()
+            tmp.write(content)
+            tmp_path = tmp.name
 
-@app.post("/create-order")
-async def create_order(plan: str = Form(...), authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Login required")
-    if plan not in PLAN_PRICES: raise HTTPException(400, "Invalid plan")
-    user  = get_user(authorization.split(" ")[1])
-    order = rz.order.create({"amount": PLAN_PRICES[plan], "currency": "INR", "notes": {"user_id": str(user.id), "plan": plan}})
-    return {"order_id": order["id"], "amount": PLAN_PRICES[plan], "currency": "INR", "email": user.email}
+        # Choose model based on mode
+        model = "whisper-large-v3" if mode == "accurate" else "whisper-large-v3-turbo"
 
-@app.post("/verify-payment")
-async def verify_payment(
-    razorpay_order_id: str   = Form(...),
-    razorpay_payment_id: str = Form(...),
-    razorpay_signature: str  = Form(...),
-    plan: str                = Form(...),
-    authorization: str       = Header(None),
-):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Login required")
-    user = get_user(authorization.split(" ")[1]); uid = str(user.id)
-    try:
-        rz.utility.verify_payment_signature({"razorpay_order_id": razorpay_order_id, "razorpay_payment_id": razorpay_payment_id, "razorpay_signature": razorpay_signature})
-    except: raise HTTPException(400, "Payment verify nahi hua!")
-    valid_until = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-    try:
-        ex = supabase.table("subscriptions").select("id").eq("user_id", uid).single().execute()
-        if ex.data:
-            supabase.table("subscriptions").update({"plan": plan, "valid_until": valid_until, "razorpay_payment_id": razorpay_payment_id}).eq("user_id", uid).execute()
+        # Transcribe
+        result = transcribe_audio(tmp_path, model)
+        
+        # Clean up
+        os.unlink(tmp_path)
+
+        # Convert format if needed
+        original_text = result.text
+        if language != "hindi":
+            converted_text = convert_to_format(original_text, language)
         else:
-            supabase.table("subscriptions").insert({"user_id": uid, "plan": plan, "valid_until": valid_until, "razorpay_payment_id": razorpay_payment_id}).execute()
-    except Exception as e: raise HTTPException(500, str(e))
-    return {"success": True, "plan": plan}
+            converted_text = original_text
+
+        return {
+            "text": original_text,
+            "converted_text": converted_text,
+            "language": language,
+            "segments": [{"start": s.start, "end": s.end, "text": s.text} for s in result.segments] if hasattr(result, 'segments') else []
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/transcribe-url")
+async def transcribe_url(request: dict):
+    """Transcribe video from URL (YouTube, etc)"""
+    try:
+        url = request.get("url")
+        language = request.get("language", "hindi")
+        mode = request.get("mode", "fast")
+
+        if not url:
+            raise HTTPException(status_code=400, detail="URL required")
+
+        # Download audio using yt-dlp
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = os.path.join(temp_dir, "audio.mp3")
+            
+            subprocess.run([
+                "yt-dlp",
+                "-x",
+                "--audio-format", "mp3",
+                "--audio-quality", "0",
+                "-o", output_path,
+                url
+            ], check=True, capture_output=True)
+
+            # Choose model
+            model = "whisper-large-v3" if mode == "accurate" else "whisper-large-v3-turbo"
+
+            # Transcribe
+            result = transcribe_audio(output_path, model)
+
+        # Convert format
+        original_text = result.text
+        if language != "hindi":
+            converted_text = convert_to_format(original_text, language)
+        else:
+            converted_text = original_text
+
+        return {
+            "text": original_text,
+            "converted_text": converted_text,
+            "language": language,
+            "segments": [{"start": s.start, "end": s.end, "text": s.text} for s in result.segments] if hasattr(result, 'segments') else []
+        }
+
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=400, detail="Failed to download video")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/export/srt")
+async def export_srt(data: dict):
+    """Export transcription as SRT subtitle file"""
+    try:
+        segments = data.get("segments", [])
+        
+        srt_content = ""
+        for i, seg in enumerate(segments, 1):
+            start = format_srt_time(seg["start"])
+            end = format_srt_time(seg["end"])
+            text = seg["text"].strip()
+            
+            srt_content += f"{i}\n{start} --> {end}\n{text}\n\n"
+
+        return Response(
+            content=srt_content,
+            media_type="text/plain",
+            headers={"Content-Disposition": "attachment; filename=transcription.srt"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+def format_srt_time(seconds: float) -> str:
+    """Convert seconds to SRT time format (HH:MM:SS,mmm)"""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    millis = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+
+@app.post("/export/pdf")
+async def export_pdf(data: dict):
+    """Export transcription as PDF"""
+    try:
+        text = data.get("converted_text") or data.get("text", "")
+        
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        
+        # Split text into lines
+        for line in text.split('\n'):
+            pdf.multi_cell(0, 10, line)
+
+        pdf_content = pdf.output(dest='S').encode('latin-1')
+
+        return Response(
+            content=pdf_content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=transcription.pdf"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/")
+async def root():
+    return {"status": "BolToText API - Simple Version", "version": "2.0"}
