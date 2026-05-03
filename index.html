@@ -1,741 +1,1006 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BolToText - Simple Transcription</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 700px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .logo {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 20px;
-        }
-
-        h1 {
-            color: #1a202c;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #64748b;
-            font-size: 16px;
-        }
-
-        .section {
-            margin-bottom: 30px;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #475569;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .format-options {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .format-btn {
-            padding: 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .format-btn:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-
-        .format-btn.active {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-
-        .format-icon {
-            font-size: 20px;
-            margin-bottom: 8px;
-        }
-
-        .format-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: #1a202c;
-            margin-bottom: 4px;
-        }
-
-        .format-desc {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-
-        .speed-toggle {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-
-        .speed-btn {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .speed-btn:hover {
-            border-color: #667eea;
-        }
-
-        .speed-btn.active {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-
-        .upload-area {
-            border: 2px dashed #cbd5e1;
-            border-radius: 16px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #f8fafc;
-        }
-
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .upload-text {
-            color: #1a202c;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .upload-hint {
-            color: #94a3b8;
-            font-size: 14px;
-        }
-
-        .file-info {
-            background: #f0f4ff;
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .file-icon {
-            font-size: 24px;
-        }
-
-        .file-details {
-            flex: 1;
-        }
-
-        .file-name {
-            font-weight: 600;
-            color: #1a202c;
-            margin-bottom: 4px;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .remove-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 20px;
-            color: #ef4444;
-            padding: 4px;
-        }
-
-        .url-input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .url-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .transcribe-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .transcribe-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .transcribe-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .result-container {
-            display: none;
-            margin-top: 30px;
-        }
-
-        .result-container.show {
-            display: block;
-        }
-
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .timestamps-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 44px;
-            height: 24px;
-            background: #cbd5e1;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .toggle-switch.active {
-            background: #667eea;
-        }
-
-        .toggle-knob {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            transition: all 0.3s;
-        }
-
-        .toggle-switch.active .toggle-knob {
-            left: 22px;
-        }
-
-        .result-text {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-size: 15px;
-            line-height: 1.8;
-            color: #1a202c;
-            white-space: pre-wrap;
-            margin-bottom: 16px;
-        }
-
-        .export-options {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .export-btn {
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .export-btn:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            display: none;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 640px) {
-            .container {
-                padding: 24px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            .format-options {
-                grid-template-columns: 1fr;
-            }
-
-            .export-options {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <svg class="logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="45" fill="url(#grad)"/>
-                <path d="M35 40 L35 60 L50 70 L65 60 L65 40 L50 30 Z" fill="white"/>
-                <defs>
-                    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#667eea"/>
-                        <stop offset="100%" style="stop-color:#764ba2"/>
-                    </linearGradient>
-                </defs>
-            </svg>
-            <h1>BolToText</h1>
-            <p class="subtitle">Convert videos to text instantly</p>
-        </div>
-
-        <div class="section">
-            <div class="section-title">Step 1 — Choose Output Format</div>
-            <div class="format-options">
-                <div class="format-btn active" data-format="hindi">
-                    <div class="format-icon">🇮🇳</div>
-                    <div class="format-name">Hindi</div>
-                    <div class="format-desc">देवनागरी लिपि</div>
-                </div>
-                <div class="format-btn" data-format="hinglish">
-                    <div class="format-icon">📝</div>
-                    <div class="format-name">Hinglish</div>
-                    <div class="format-desc">Roman script</div>
-                </div>
-                <div class="format-btn" data-format="english">
-                    <div class="format-icon">🌐</div>
-                    <div class="format-name">English</div>
-                    <div class="format-desc">Full translation</div>
-                </div>
-            </div>
-
-            <div class="speed-toggle">
-                <div class="speed-btn active" data-speed="fast">
-                    ⚡ Fast
-                </div>
-                <div class="speed-btn" data-speed="accurate">
-                    🎯 Accurate
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">Step 2 — Add Video</div>
-            
-            <div class="upload-area" id="uploadArea">
-                <input type="file" id="fileInput" accept="video/*,audio/*" class="hidden">
-                <div class="upload-icon">🎬</div>
-                <div class="upload-text">Click to upload or drag & drop</div>
-                <div class="upload-hint">MP4, MOV, MP3, WAV, M4A, WEBM<br>Max 50MB</div>
-            </div>
-
-            <div class="file-info hidden" id="fileInfo">
-                <span class="file-icon">📹</span>
-                <div class="file-details">
-                    <div class="file-name" id="fileName"></div>
-                    <div class="file-size" id="fileSize"></div>
-                </div>
-                <button class="remove-btn" id="removeFile">✕</button>
-            </div>
-
-            <div style="text-align: center; margin: 20px 0; color: #94a3b8; font-weight: 600;">OR</div>
-
-            <input type="text" class="url-input" id="urlInput" placeholder="🔗 Paste YouTube/video link">
-        </div>
-
-        <button class="transcribe-btn" id="transcribeBtn">
-            ▶ Transcribe Now
-        </button>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div class="loading-text">Transcribing your video...</div>
-        </div>
-
-        <div class="result-container" id="resultContainer">
-            <div class="result-header">
-                <div class="section-title" style="margin: 0;">Transcription Result</div>
-                <div class="timestamps-toggle">
-                    <span>Timestamps</span>
-                    <div class="toggle-switch" id="timestampToggle">
-                        <div class="toggle-knob"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="result-text" id="resultText"></div>
-
-            <div class="export-options">
-                <button class="export-btn" id="copyBtn">📋 Copy</button>
-                <button class="export-btn" id="txtBtn">📄 Download TXT</button>
-                <button class="export-btn" id="srtBtn">🎬 Download SRT</button>
-                <button class="export-btn" id="pdfBtn">📕 Download PDF</button>
-            </div>
-        </div>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel Transcriber</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #08080f;
+    --surface: #0e0e1c;
+    --card: #131323;
+    --border: #1c1c35;
+    --border-bright: #2a2a50;
+    --accent: #f97316;
+    --accent-dim: rgba(249,115,22,0.15);
+    --accent2: #8b5cf6;
+    --accent2-dim: rgba(139,92,246,0.12);
+    --text: #eeeef5;
+    --text-muted: #6b6b95;
+    --text-dim: #9898bb;
+    --success: #22d3a3;
+    --error: #f87171;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  body {
+    background-image: 
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(139,92,246,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 100%, rgba(249,115,22,0.06) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+
+  .app {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 36px;
+    animation: fadeDown 0.6s ease;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), #dc2626);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 24px rgba(249,115,22,0.35);
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 40%, var(--text-dim));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin-top: 4px;
+  }
+
+  .lang-pills {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .lang-pill {
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .lang-pill.hi { border-color: rgba(249,115,22,0.4); color: #fb923c; background: rgba(249,115,22,0.08); }
+  .lang-pill.hinglish { border-color: rgba(139,92,246,0.4); color: #a78bfa; background: rgba(139,92,246,0.08); }
+  .lang-pill.en { border-color: rgba(34,211,163,0.4); color: #34d399; background: rgba(34,211,163,0.08); }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 14px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; padding: 24px; }
+  .tab-content.active { display: block; }
+
+  /* Dropzone */
+  .dropzone {
+    border: 2px dashed var(--border-bright);
+    border-radius: var(--radius-sm);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: transparent;
+    position: relative;
+  }
+
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .dropzone.has-file {
+    border-color: var(--success);
+    background: rgba(34,211,163,0.06);
+  }
+
+  .dropzone input { 
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; cursor: pointer;
+  }
+
+  .dz-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .dz-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; }
+  .dz-sub { color: var(--text-muted); font-size: 0.85rem; }
+  .dz-formats { 
+    margin-top: 10px; font-size: 0.78rem; color: var(--text-muted);
+    background: rgba(255,255,255,0.04); display: inline-block;
+    padding: 4px 10px; border-radius: 100px;
+  }
+
+  /* Instagram helper */
+  .ig-helper {
+    margin-top: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .ig-helper-toggle {
+    width: 100%; background: none; border: none; padding: 12px 16px;
+    color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    text-align: left; transition: color 0.2s;
+  }
+  .ig-helper-toggle:hover { color: var(--text); }
+  .ig-helper-toggle .chevron { margin-left: auto; transition: transform 0.2s; }
+  .ig-helper-toggle.open .chevron { transform: rotate(180deg); }
+
+  .ig-helper-body {
+    display: none; padding: 16px; border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .ig-helper-body.open { display: block; }
+
+  .helper-steps { list-style: none; }
+  .helper-steps li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; font-size: 0.85rem; color: var(--text-dim);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .helper-steps li:last-child { border-bottom: none; }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background: var(--accent-dim); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; margin-top: 1px;
+  }
+
+  .downloader-links {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+  }
+
+  .dl-link {
+    padding: 5px 12px; border-radius: 100px;
+    background: var(--accent2-dim); border: 1px solid rgba(139,92,246,0.3);
+    color: #a78bfa; font-size: 0.8rem; text-decoration: none;
+    transition: all 0.2s;
+  }
+  .dl-link:hover { background: rgba(139,92,246,0.2); }
+
+  /* URL Input Tab */
+  .url-section { }
+
+  .input-group {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+
+  .url-input-field {
+    flex: 1; padding: 12px 16px;
+    background: var(--surface); border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .url-input-field:focus { border-color: var(--accent); }
+  .url-input-field::placeholder { color: var(--text-muted); }
+
+  /* Model selector */
+  .options-bar {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+
+  .options-label { font-size: 0.82rem; color: var(--text-muted); }
+
+  .model-chips { display: flex; gap: 6px; }
+
+  .model-chip {
+    padding: 5px 12px; border-radius: 100px; font-size: 0.8rem;
+    border: 1px solid var(--border-bright); background: none;
+    color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .model-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .model-chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* Action button */
+  .action-bar {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-transcribe {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #dc2626);
+    border: none; border-radius: var(--radius-sm); color: white;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+    cursor: pointer; transition: all 0.25s; letter-spacing: 0.3px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(249,115,22,0.3);
+  }
+  .btn-transcribe:hover:not(:disabled) { 
+    transform: translateY(-1px); 
+    box-shadow: 0 6px 28px rgba(249,115,22,0.45);
+  }
+  .btn-transcribe:disabled { 
+    opacity: 0.5; cursor: not-allowed; transform: none;
+    box-shadow: none;
+  }
+
+  /* Progress section */
+  #progress-section {
+    margin-top: 20px;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .progress-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .progress-header {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border-bright);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .steps-list { list-style: none; }
+
+  .step-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; font-size: 0.88rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .step-item:last-child { border-bottom: none; }
+
+  .step-icon {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 0.75rem;
+  }
+  .step-icon.pending { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border-bright); }
+  .step-icon.active { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); animation: pulse 1.5s ease infinite; }
+  .step-icon.done { background: rgba(34,211,163,0.15); color: var(--success); border: 1px solid rgba(34,211,163,0.4); }
+
+  .step-info { flex: 1; }
+  .step-name { font-weight: 500; }
+  .step-detail { color: var(--text-muted); font-size: 0.8rem; margin-top: 1px; }
+
+  .progress-bar-wrap {
+    margin-top: 16px;
+    height: 4px; border-radius: 2px; background: var(--border);
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-text {
+    font-size: 0.78rem; color: var(--text-muted); margin-top: 8px; text-align: right;
+  }
+
+  /* Results */
+  #results-section {
+    margin-top: 20px;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .results-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .results-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .results-title {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+  }
+
+  .lang-badge {
+    padding: 4px 12px; border-radius: 100px; font-size: 0.78rem; font-weight: 600;
+    margin-left: auto;
+  }
+
+  .results-body { padding: 24px; }
+
+  .summary-box {
+    background: var(--accent2-dim);
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+  }
+  .summary-label {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: #a78bfa; margin-bottom: 6px;
+  }
+
+  .transcript-box {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 0.92rem; line-height: 1.8;
+    white-space: pre-wrap;
+    max-height: 400px;
+    overflow-y: auto;
+    color: var(--text);
+  }
+
+  .transcript-box::-webkit-scrollbar { width: 4px; }
+  .transcript-box::-webkit-scrollbar-track { background: var(--border); }
+  .transcript-box::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+  .results-actions {
+    display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
+  }
+
+  .btn-action {
+    padding: 9px 18px; border-radius: var(--radius-sm); font-size: 0.85rem;
+    font-family: 'DM Sans', sans-serif; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s; border: 1px solid;
+  }
+  .btn-copy { background: var(--accent-dim); border-color: rgba(249,115,22,0.4); color: var(--accent); }
+  .btn-copy:hover { background: rgba(249,115,22,0.2); }
+  .btn-download { background: var(--accent2-dim); border-color: rgba(139,92,246,0.4); color: #a78bfa; }
+  .btn-download:hover { background: rgba(139,92,246,0.2); }
+  .btn-reset { background: rgba(255,255,255,0.04); border-color: var(--border-bright); color: var(--text-muted); margin-left: auto; }
+  .btn-reset:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* Error box */
+  .error-box {
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px; color: var(--error); font-size: 0.88rem;
+    margin-top: 12px; display: none;
+  }
+
+  /* Animations */
+  @keyframes fadeDown { from { opacity:0; transform: translateY(-16px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(249,115,22,0.3); } 50% { box-shadow: 0 0 0 6px rgba(249,115,22,0); } }
+
+  /* Utility */
+  .hidden { display: none !important; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-2 { gap: 8px; }
+  .w-full { width: 100%; }
+</style>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-icon">🎬</div>
+      <h1>Reel Transcriber</h1>
+    </div>
+    <div class="subtitle">Instagram Reels को AI se text mein convert karein</div>
+    <div class="lang-pills">
+      <span class="lang-pill hi">🇮🇳 Hindi</span>
+      <span class="lang-pill hinglish">✨ Hinglish</span>
+      <span class="lang-pill en">🇬🇧 English</span>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card" id="upload-card">
+    <div class="tabs">
+      <button class="tab active" id="tab-upload" onclick="switchTab('upload')">
+        📁 Video Upload
+      </button>
+      <button class="tab" id="tab-url" onclick="switchTab('url')">
+        🔗 Direct Video URL
+      </button>
     </div>
 
-    <script>
-        const API_BASE = 'https://boltootext.onrender.com';
-        
-        let currentFile = null;
-        let currentFormat = 'hindi';
-        let currentSpeed = 'fast';
-        let transcriptionData = null;
-        let showTimestamps = false;
+    <!-- Upload Tab -->
+    <div class="tab-content active" id="content-upload">
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="file-input" accept="video/*,audio/*" />
+        <div class="dz-icon" id="dz-icon">📱</div>
+        <div class="dz-title" id="dz-title">Drop your Reel here</div>
+        <div class="dz-sub" id="dz-sub">ya click karke file select karo</div>
+        <div class="dz-formats">MP4, MOV, MKV, WebM, M4A supported</div>
+      </div>
 
-        // Format selection
-        document.querySelectorAll('.format-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentFormat = this.dataset.format;
-            });
-        });
+      <!-- Instagram Download Helper -->
+      <div class="ig-helper">
+        <button class="ig-helper-toggle" onclick="toggleHelper(this)">
+          <span>📸</span>
+          Instagram Reel kaise download karein?
+          <span class="chevron">▾</span>
+        </button>
+        <div class="ig-helper-body">
+          <ul class="helper-steps">
+            <li>
+              <span class="step-num">1</span>
+              <div>Instagram mein Reel open karo aur uska <strong>link copy</strong> karo (Share → Copy Link)</div>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <div>Kisi bhi downloader site pe jao aur link paste karo:</div>
+            </li>
+          </ul>
+          <div class="downloader-links">
+            <a href="https://saveinsta.app" target="_blank" class="dl-link">saveinsta.app ↗</a>
+            <a href="https://snapinsta.app" target="_blank" class="dl-link">snapinsta.app ↗</a>
+            <a href="https://igram.world" target="_blank" class="dl-link">igram.world ↗</a>
+          </div>
+          <ul class="helper-steps" style="margin-top:12px">
+            <li>
+              <span class="step-num">3</span>
+              <div>MP4 file download ho jayegi, use upar drop karo</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
-        // Speed selection
-        document.querySelectorAll('.speed-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentSpeed = this.dataset.speed;
-            });
-        });
+    <!-- URL Tab -->
+    <div class="tab-content" id="content-url">
+      <p style="color:var(--text-muted); font-size:0.87rem; margin-bottom:14px;">
+        Agar tumhare paas direct .mp4 link hai (Instagram downloader se), to yahan paste karo:
+      </p>
+      <div class="input-group">
+        <input 
+          class="url-input-field" 
+          id="video-url" 
+          type="url" 
+          placeholder="https://video.cdninstagram.com/... ya koi bhi direct video URL"
+        />
+      </div>
+      <div style="background:var(--accent2-dim); border:1px solid rgba(139,92,246,0.2); border-radius:var(--radius-sm); padding:12px 14px; font-size:0.82rem; color:var(--text-dim);">
+        ⚠️ Instagram ke direct links CORS ki wajah se kaam nahi karte. Pehle video download karo aur MP4 upload karo — best results milenge.
+      </div>
+    </div>
 
-        // File upload
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
+    <!-- Model Options -->
+    <div class="options-bar">
+      <span class="options-label">AI Model:</span>
+      <div class="model-chips">
+        <button class="model-chip" onclick="selectModel('Xenova/whisper-tiny', this)" title="~150MB, fastest">Tiny ⚡</button>
+        <button class="model-chip active" onclick="selectModel('Xenova/whisper-base', this)" title="~290MB, balanced">Base ⚖️</button>
+        <button class="model-chip" onclick="selectModel('Xenova/whisper-small', this)" title="~460MB, best for Hindi">Small 🎯</button>
+      </div>
+      <span class="options-label" style="margin-left:auto; font-size:0.75rem;">Hindi/Hinglish ke liye Small best hai</span>
+    </div>
 
-        uploadArea.addEventListener('click', () => fileInput.click());
+    <!-- Action -->
+    <div class="action-bar">
+      <button class="btn-transcribe" id="btn-transcribe" onclick="startTranscription()" disabled>
+        <span>🎙️</span> Transcribe Karo
+      </button>
+      <div class="error-box" id="error-box"></div>
+    </div>
+  </div>
 
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+  <!-- Progress Section -->
+  <div id="progress-section" class="hidden">
+    <div class="progress-card">
+      <div class="progress-header">
+        <div class="spinner"></div>
+        Processing ho raha hai...
+      </div>
+      <ul class="steps-list" id="steps-list">
+        <li class="step-item" id="step-model">
+          <div class="step-icon pending" id="step-model-icon">1</div>
+          <div class="step-info">
+            <div class="step-name">AI Model Load</div>
+            <div class="step-detail" id="step-model-detail">Waiting...</div>
+          </div>
+        </li>
+        <li class="step-item" id="step-audio">
+          <div class="step-icon pending" id="step-audio-icon">2</div>
+          <div class="step-info">
+            <div class="step-name">Audio Extract</div>
+            <div class="step-detail" id="step-audio-detail">Video se audio nikaalna baaki hai</div>
+          </div>
+        </li>
+        <li class="step-item" id="step-whisper">
+          <div class="step-icon pending" id="step-whisper-icon">3</div>
+          <div class="step-info">
+            <div class="step-name">Whisper Transcription</div>
+            <div class="step-detail" id="step-whisper-detail">Speech-to-text abhi shuru nahi hui</div>
+          </div>
+        </li>
+        <li class="step-item" id="step-claude">
+          <div class="step-icon pending" id="step-claude-icon">4</div>
+          <div class="step-info">
+            <div class="step-name">Language Processing</div>
+            <div class="step-detail" id="step-claude-detail">Claude se format karna baaki hai</div>
+          </div>
+        </li>
+      </ul>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-text" id="progress-text">0%</div>
+    </div>
+  </div>
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
+  <!-- Results Section -->
+  <div id="results-section" class="hidden">
+    <div class="results-card">
+      <div class="results-header">
+        <span>✅</span>
+        <span class="results-title">Transcription Ready!</span>
+        <span class="lang-badge" id="lang-badge"></span>
+      </div>
+      <div class="results-body">
+        <div class="summary-box">
+          <div class="summary-label">📌 Summary</div>
+          <div id="summary-text"></div>
+        </div>
+        <div class="summary-label" style="margin-bottom:8px;">📝 Full Transcription</div>
+        <div class="transcript-box" id="transcript-text"></div>
+        <div class="results-actions">
+          <button class="btn-action btn-copy" onclick="copyText()">📋 Copy Karo</button>
+          <button class="btn-action btn-download" onclick="downloadText()">⬇️ Download TXT</button>
+          <button class="btn-action btn-reset" onclick="resetAll()">🔄 Naya Video</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) handleFile(file);
-        });
+</div>
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) handleFile(e.target.files[0]);
-        });
+<script type="module">
 
-        function handleFile(file) {
-            currentFile = file;
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = formatFileSize(file.size);
-            uploadArea.classList.add('hidden');
-            fileInfo.classList.remove('hidden');
-            document.getElementById('urlInput').value = '';
+// ──────────────────────────────────────────────
+//  State
+// ──────────────────────────────────────────────
+let selectedFile = null;
+let selectedModel = 'Xenova/whisper-base';
+let transcriber = null;
+let modelLoaded = false;
+
+// ──────────────────────────────────────────────
+//  Tab switching
+// ──────────────────────────────────────────────
+window.switchTab = function(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('content-' + tab).classList.add('active');
+};
+
+// ──────────────────────────────────────────────
+//  Instagram helper toggle
+// ──────────────────────────────────────────────
+window.toggleHelper = function(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+};
+
+// ──────────────────────────────────────────────
+//  Model selection
+// ──────────────────────────────────────────────
+window.selectModel = function(model, btn) {
+  document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  selectedModel = model;
+  modelLoaded = false;
+  transcriber = null;
+};
+
+// ──────────────────────────────────────────────
+//  File drag-drop
+// ──────────────────────────────────────────────
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f);
+});
+
+fileInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (f) setFile(f);
+});
+
+function setFile(file) {
+  selectedFile = file;
+  dropzone.classList.add('has-file');
+  document.getElementById('dz-icon').textContent = '✅';
+  document.getElementById('dz-title').textContent = file.name;
+  document.getElementById('dz-sub').textContent = `${(file.size / 1024 / 1024).toFixed(1)} MB`;
+  document.getElementById('btn-transcribe').disabled = false;
+}
+
+// ──────────────────────────────────────────────
+//  Progress helpers
+// ──────────────────────────────────────────────
+function setStep(id, status, detail) {
+  const icon = document.getElementById('step-' + id + '-icon');
+  const det = document.getElementById('step-' + id + '-detail');
+  icon.className = 'step-icon ' + status;
+  if (status === 'done') icon.textContent = '✓';
+  if (status === 'active') icon.textContent = '●';
+  if (det && detail) det.textContent = detail;
+}
+
+function setProgress(pct, text) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = text || pct + '%';
+}
+
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  box.style.display = 'block';
+  box.textContent = '❌ ' + msg;
+}
+
+function clearError() {
+  document.getElementById('error-box').style.display = 'none';
+}
+
+// ──────────────────────────────────────────────
+//  Audio extraction from video file
+// ──────────────────────────────────────────────
+async function extractAudio(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const audioContext = new AudioContext();
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  await audioContext.close();
+
+  // Resample to 16kHz mono for Whisper
+  const targetRate = 16000;
+  const length = Math.ceil(audioBuffer.duration * targetRate);
+  const offlineCtx = new OfflineAudioContext(1, length, targetRate);
+  const src = offlineCtx.createBufferSource();
+  src.buffer = audioBuffer;
+  src.connect(offlineCtx.destination);
+  src.start(0);
+  const rendered = await offlineCtx.startRendering();
+  return rendered.getChannelData(0); // Float32Array
+}
+
+// ──────────────────────────────────────────────
+//  Load Whisper via Transformers.js
+// ──────────────────────────────────────────────
+async function loadWhisper(onProgress) {
+  const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+  env.allowLocalModels = false;
+
+  const pipe = await pipeline(
+    'automatic-speech-recognition',
+    selectedModel,
+    {
+      progress_callback: (p) => {
+        if (p.status === 'downloading' || p.status === 'loading') {
+          const pct = p.progress ? Math.round(p.progress) : 0;
+          const name = p.file || 'model';
+          onProgress(pct, `Downloading ${name.split('/').pop()}... ${pct}%`);
         }
+      }
+    }
+  );
+  return pipe;
+}
 
-        document.getElementById('removeFile').addEventListener('click', () => {
-            currentFile = null;
-            fileInput.value = '';
-            uploadArea.classList.remove('hidden');
-            fileInfo.classList.add('hidden');
-        });
+// ──────────────────────────────────────────────
+//  Claude API for language processing
+// ──────────────────────────────────────────────
+async function processWithClaude(rawText) {
+  const prompt = `You are an expert transcription formatter for Indian social media content.
 
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-        }
+Raw transcription from a video: """${rawText}"""
 
-        // Transcribe button
-        document.getElementById('transcribeBtn').addEventListener('click', async () => {
-            const url = document.getElementById('urlInput').value.trim();
-            
-            if (!currentFile && !url) {
-                alert('Please upload a file or enter a URL');
-                return;
-            }
+Your job:
+1. Detect the language: Is it HINGLISH (Hindi-English mix in Roman script), HINDI (pure Devanagari), or ENGLISH?
+2. Format accordingly:
+   - HINGLISH → Write in Hinglish Roman script naturally (e.g., "Yaar, yeh bahut accha content hai, seriously try karo")
+   - HINDI → Write in clean Devanagari Hindi
+   - ENGLISH → Write in clean English
+3. Fix grammar, remove filler words (um, uh, hmm), fix repetitions, add proper punctuation.
+4. Write a brief 1-2 sentence summary in the same language/script.
 
-            const btn = document.getElementById('transcribeBtn');
-            const loading = document.getElementById('loading');
-            const resultContainer = document.getElementById('resultContainer');
+Return ONLY valid JSON, no markdown, no explanation:
+{
+  "language": "hinglish" or "hindi" or "english",
+  "transcription": "formatted transcription here",
+  "summary": "brief summary here"
+}`;
 
-            btn.disabled = true;
-            loading.classList.add('show');
-            resultContainer.classList.remove('show');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
 
-            try {
-                let response;
+  const data = await res.json();
+  const text = data.content?.map(c => c.text || '').join('') || '';
 
-                if (currentFile) {
-                    // File upload
-                    const formData = new FormData();
-                    formData.append('file', currentFile);
-                    formData.append('language', currentFormat);
-                    formData.append('mode', currentSpeed);
+  // Parse JSON
+  const clean = text.replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(clean);
+  } catch {
+    // Fallback: try to extract JSON from text
+    const match = clean.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Claude response parse nahi hua');
+  }
+}
 
-                    response = await fetch(`${API_BASE}/transcribe`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                } else {
-                    // URL transcription
-                    response = await fetch(`${API_BASE}/transcribe-url`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: url,
-                            language: currentFormat,
-                            mode: currentSpeed
-                        })
-                    });
-                }
+// ──────────────────────────────────────────────
+//  Main transcription flow
+// ──────────────────────────────────────────────
+window.startTranscription = async function() {
+  clearError();
 
-                if (!response.ok) {
-                    throw new Error('Transcription failed');
-                }
+  // Determine source
+  const urlInput = document.getElementById('video-url').value.trim();
+  const isUrlMode = !selectedFile && urlInput;
 
-                const data = await response.json();
-                transcriptionData = data;
-                displayResult(data);
-                resultContainer.classList.add('show');
+  if (!selectedFile && !urlInput) {
+    showError('Pehle video file upload karo ya URL dalo.');
+    return;
+  }
 
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                loading.classList.remove('show');
-            }
-        });
+  // Show progress
+  document.getElementById('upload-card').style.opacity = '0.5';
+  document.getElementById('upload-card').style.pointerEvents = 'none';
+  document.getElementById('progress-section').classList.remove('hidden');
+  document.getElementById('results-section').classList.add('hidden');
 
-        // Display result
-        function displayResult(data) {
-            const resultText = document.getElementById('resultText');
-            
-            if (showTimestamps && data.segments) {
-                resultText.textContent = formatWithTimestamps(data.segments);
-            } else {
-                resultText.textContent = data.text || data.converted_text || '';
-            }
-        }
+  try {
+    // ── Step 1: Load model ──
+    setStep('model', 'active', 'Model download ho raha hai...');
+    setProgress(5, 'Loading model...');
 
-        function formatWithTimestamps(segments) {
-            return segments.map(seg => {
-                const start = formatTime(seg.start);
-                const end = formatTime(seg.end);
-                return `[${start} - ${end}] ${seg.text}`;
-            }).join('\n\n');
-        }
+    if (!modelLoaded) {
+      transcriber = await loadWhisper((pct, msg) => {
+        setStep('model', 'active', msg);
+        setProgress(5 + Math.floor(pct * 0.35), msg);
+      });
+      modelLoaded = true;
+    }
 
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
+    setStep('model', 'done', 'Model ready ✓');
+    setProgress(40, 'Model loaded');
 
-        // Timestamp toggle
-        document.getElementById('timestampToggle').addEventListener('click', function() {
-            showTimestamps = !showTimestamps;
-            this.classList.toggle('active');
-            if (transcriptionData) displayResult(transcriptionData);
-        });
+    // ── Step 2: Extract audio ──
+    setStep('audio', 'active', 'Video se audio nikal raha hai...');
+    setProgress(45, 'Extracting audio...');
 
-        // Export functions
-        document.getElementById('copyBtn').addEventListener('click', () => {
-            const text = document.getElementById('resultText').textContent;
-            navigator.clipboard.writeText(text);
-            alert('Copied to clipboard!');
-        });
+    let audioData;
 
-        document.getElementById('txtBtn').addEventListener('click', () => {
-            const text = document.getElementById('resultText').textContent;
-            downloadFile(text, 'transcription.txt', 'text/plain');
-        });
+    if (selectedFile) {
+      audioData = await extractAudio(selectedFile);
+    } else {
+      // Try URL
+      setStep('audio', 'active', 'URL se video fetch ho raha hai...');
+      try {
+        const resp = await fetch(urlInput);
+        const buf = await resp.arrayBuffer();
+        const blob = new Blob([buf], { type: 'video/mp4' });
+        const fakeFile = new File([blob], 'video.mp4', { type: 'video/mp4' });
+        audioData = await extractAudio(fakeFile);
+      } catch (e) {
+        throw new Error('URL se video nahi mili. Please video download karke upload karo.');
+      }
+    }
 
-        document.getElementById('srtBtn').addEventListener('click', async () => {
-            if (!transcriptionData) return;
-            
-            try {
-                const response = await fetch(`${API_BASE}/export/srt`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(transcriptionData)
-                });
+    setStep('audio', 'done', 'Audio ready ✓');
+    setProgress(55, 'Audio extracted');
 
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'transcription.srt';
-                a.click();
-            } catch (error) {
-                alert('Export failed');
-            }
-        });
+    // ── Step 3: Whisper ──
+    setStep('whisper', 'active', 'Speech recognize ho rahi hai...');
+    setProgress(60, 'Transcribing...');
 
-        document.getElementById('pdfBtn').addEventListener('click', async () => {
-            if (!transcriptionData) return;
-            
-            try {
-                const response = await fetch(`${API_BASE}/export/pdf`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(transcriptionData)
-                });
+    const whisperResult = await transcriber(audioData, {
+      task: 'transcribe',
+      language: undefined, // auto detect
+      chunk_length_s: 30,
+      stride_length_s: 5,
+      return_timestamps: false,
+    });
 
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'transcription.pdf';
-                a.click();
-            } catch (error) {
-                alert('Export failed');
-            }
-        });
+    const rawText = whisperResult.text?.trim();
+    if (!rawText) throw new Error('Koi speech detect nahi hua. Video mein audio hai?');
 
-        function downloadFile(content, filename, type) {
-            const blob = new Blob([content], { type });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-        }
-    </script>
-</body>
+    setStep('whisper', 'done', 'Transcription complete ✓');
+    setProgress(80, 'Transcribed!');
+
+    // ── Step 4: Claude processing ──
+    setStep('claude', 'active', 'Language format ho rahi hai...');
+    setProgress(85, 'Claude processing...');
+
+    const result = await processWithClaude(rawText);
+
+    setStep('claude', 'done', 'Formatting complete ✓');
+    setProgress(100, 'Done!');
+
+    // ── Show results ──
+    showResults(result);
+
+  } catch (err) {
+    console.error(err);
+    showError(err.message || 'Kuch problem aa gayi. Dobara try karo.');
+    document.getElementById('upload-card').style.opacity = '1';
+    document.getElementById('upload-card').style.pointerEvents = 'auto';
+    document.getElementById('progress-section').classList.add('hidden');
+  }
+};
+
+// ──────────────────────────────────────────────
+//  Display results
+// ──────────────────────────────────────────────
+function showResults(result) {
+  const badge = document.getElementById('lang-badge');
+  const { language, transcription, summary } = result;
+
+  // Badge styling
+  if (language === 'hinglish') {
+    badge.textContent = '✨ Hinglish';
+    badge.style.cssText = 'background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; padding:4px 12px; border-radius:100px; font-size:0.78rem; font-weight:600;';
+  } else if (language === 'hindi') {
+    badge.textContent = '🇮🇳 Hindi';
+    badge.style.cssText = 'background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.4); color:#fb923c; padding:4px 12px; border-radius:100px; font-size:0.78rem; font-weight:600;';
+  } else {
+    badge.textContent = '🇬🇧 English';
+    badge.style.cssText = 'background:rgba(34,211,163,0.1); border:1px solid rgba(34,211,163,0.35); color:#34d399; padding:4px 12px; border-radius:100px; font-size:0.78rem; font-weight:600;';
+  }
+
+  document.getElementById('summary-text').textContent = summary || '—';
+  document.getElementById('transcript-text').textContent = transcription || '—';
+
+  document.getElementById('results-section').classList.remove('hidden');
+  document.getElementById('progress-section').classList.add('hidden');
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ──────────────────────────────────────────────
+//  Actions
+// ──────────────────────────────────────────────
+window.copyText = async function() {
+  const text = document.getElementById('transcript-text').textContent;
+  await navigator.clipboard.writeText(text);
+  const btn = document.querySelector('.btn-copy');
+  const orig = btn.textContent;
+  btn.textContent = '✅ Copied!';
+  setTimeout(() => btn.textContent = orig, 2000);
+};
+
+window.downloadText = function() {
+  const text = document.getElementById('transcript-text').textContent;
+  const summary = document.getElementById('summary-text').textContent;
+  const full = `SUMMARY:\n${summary}\n\n${'─'.repeat(40)}\n\nTRANSCRIPTION:\n${text}`;
+  const blob = new Blob([full], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'reel-transcription.txt';
+  a.click();
+};
+
+window.resetAll = function() {
+  selectedFile = null;
+  document.getElementById('file-input').value = '';
+  dropzone.classList.remove('has-file');
+  document.getElementById('dz-icon').textContent = '📱';
+  document.getElementById('dz-title').textContent = 'Drop your Reel here';
+  document.getElementById('dz-sub').textContent = 'ya click karke file select karo';
+  document.getElementById('btn-transcribe').disabled = true;
+  document.getElementById('upload-card').style.opacity = '1';
+  document.getElementById('upload-card').style.pointerEvents = 'auto';
+  document.getElementById('progress-section').classList.add('hidden');
+  document.getElementById('results-section').classList.add('hidden');
+  document.getElementById('video-url').value = '';
+  clearError();
+
+  // Reset steps
+  ['model','audio','whisper','claude'].forEach(id => {
+    setStep(id, 'pending', '');
+    const numMap = {model:'1',audio:'2',whisper:'3',claude:'4'};
+    document.getElementById('step-'+id+'-icon').textContent = numMap[id];
+  });
+  setProgress(0, '0%');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+</script>
 </html>
